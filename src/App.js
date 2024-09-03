@@ -4,6 +4,8 @@ import Home from './pages/home/Home';
 import People from './pages/people/People';
 import City from './pages/city/City';
 import Neighborhood from './pages/neighborhood/Neighborhood';
+import Product from './pages/product/Product';
+import Sales from './pages/sales/Sales';
 
 
 function App() {
@@ -15,6 +17,8 @@ function App() {
             <Route path='people' element= {<People />} />
             <Route path='city' element= {<City />} />
             <Route path='neighborhood' element= {<Neighborhood />} />
+            <Route path='product' element= {<Product />} />
+            <Route path='sales' element= {<Sales />} />
         </Routes>
       </BrowserRouter>
     </>
