@@ -17,7 +17,8 @@ export default function Sales() {
         { name: 'Maria'},
         { name: 'Carlos'},
         { name: 'Pedro'},
-        { name: 'Ana'}
+        { name: 'Ana'},
+        { name: 'Renato Augusto Platz Guimarães Neto'}
     ];
     const products = [
         { name: 'Caneta BIC' },
@@ -28,7 +29,7 @@ export default function Sales() {
     ];
     return (
         <Card>
-            <h1>Cadastro de Produto</h1>
+            <h1>Venda</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
@@ -66,7 +67,7 @@ export default function Sales() {
                                 <label htmlFor="produto">Produto</label>
                                 </FloatLabel>
                             </div>
-                            <div className="col-12 md:col-6 lg:col-2">
+                            <div className="mx-4 col-12 md:col-6 lg:col-2">
                                 <FloatLabel>
                                     <InputText name="qtde-venda" id="qtde-venda" style={{ width: '100%' }} />
                                     <label htmlFor="nome">Qtde Venda</label>
@@ -85,7 +86,7 @@ export default function Sales() {
                                 </FloatLabel>
                             </div>
                             <div className='col-12 md:col-6 lg:col-2'>
-                                <Button icon="pi pi-shopping-cart" />
+                                <Button icon="pi pi-cart-plus" severity='secondary' outlined />
                             </div>
                             
                         </div>

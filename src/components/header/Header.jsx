@@ -4,6 +4,7 @@ import { Menubar } from 'primereact/menubar';
 import { InputText } from 'primereact/inputtext';
 import { Badge } from 'primereact/badge';
 import { Avatar } from 'primereact/avatar';
+import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
     const itemRenderer = (item) => (
@@ -14,6 +15,7 @@ export default function Header() {
             {item.shortcut && <span className="ml-auto border-1 surface-border border-round surface-100 text-xs p-1">{item.shortcut}</span>}
         </a>
     );
+    const navigate = useNavigate();
     const items = [
         {
             label: 'Cadastro',
@@ -21,7 +23,8 @@ export default function Header() {
                 {
                     label: 'Bairros',
                     icon: 'pi pi-map-marker',
-                    template: itemRenderer
+                    template: itemRenderer,
+                    command: () => navigate('/neighborhood')
                 },
                 {
                     separator: true
@@ -29,7 +32,8 @@ export default function Header() {
                 {
                     label: 'Cidades',
                     icon: 'pi pi-map-marker',
-                    template: itemRenderer
+                    template: itemRenderer,
+                    command: () => navigate('/city')
                 },
                 {
                     separator: true
@@ -37,7 +41,8 @@ export default function Header() {
                 {
                     label: 'Pessoas',
                     icon: 'pi pi-user',
-                    template: itemRenderer
+                    template: itemRenderer,
+                    command: () => navigate('/people')
                 },
                 {
                     separator: true
@@ -45,7 +50,8 @@ export default function Header() {
                 {
                     label: 'Produtos',
                     icon: 'pi pi-shopping-bag',
-                    template: itemRenderer
+                    template: itemRenderer,
+                    command: () => navigate('/product')
                 },
 
             ]
@@ -56,7 +62,8 @@ export default function Header() {
                 {
                     label: 'Vendas',
                     icon: 'pi pi-shopping-bag',
-                    template: itemRenderer
+                    template: itemRenderer,
+                    command: () => navigate('/sales')
                 },
 
             ]
