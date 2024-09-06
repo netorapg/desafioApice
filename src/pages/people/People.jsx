@@ -6,10 +6,11 @@ import 'primeflex/primeflex.css';
 import { Dropdown } from 'primereact/dropdown';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 
 export default function People() {
+    const navigate = useNavigate();
     const [selectedCity, setSelectedCity] = useState(null);
     const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
     const [cities, setCities] = useState([]);
@@ -26,7 +27,7 @@ export default function People() {
         cidade_id: null,
         bairro_id: null
     });
-
+  
     useEffect(() => {
         // Fetch cities and neighborhoods from the backend
         const fetchData = async () => {
@@ -61,7 +62,7 @@ export default function People() {
         });
         setSelectedCity(null);
         setSelectedNeighborhood(null);
-        Navigate('/');
+        navigate('/');
     };
 
     const handleChange = (e) => {
