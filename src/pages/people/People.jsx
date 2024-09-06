@@ -1,20 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { InputText } from 'primereact/inputtext';
 import { FloatLabel } from 'primereact/floatlabel';
-import 'primeflex/primeflex.css';
-import { Dropdown } from 'primereact/dropdown';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
-import { useNavigate } from 'react-router-dom';
+import 'primeflex/primeflex.css';
 
-
-export default function People() {
-    const navigate = useNavigate();
-    const [selectedCity, setSelectedCity] = useState(null);
-    const [selectedNeighborhood, setSelectedNeighborhood] = useState(null);
-    const [cities, setCities] = useState([]);
-    const [neighborhoods, setNeighborhoods] = useState([]);
+export default function Pessoa() {
     const [formData, setFormData] = useState({
         codigo: '',
         nome: '',
@@ -24,68 +17,44 @@ export default function People() {
         complemento: '',
         telefone: '',
         email: '',
-        cidade_id: null,
-        bairro_id: null
+        cidade_id: '',
+        bairro_id: ''
     });
-  
-    useEffect(() => {
-        // Fetch cities and neighborhoods from the backend
-        const fetchData = async () => {
-            try {
-                const citiesResponse = await fetch('http://localhost:3001/api/cidades');
-                const citiesData = await citiesResponse.json();
-                setCities(citiesData);
 
-                const neighborhoodsResponse = await fetch('http://localhost:3001/api/bairros');
-                const neighborhoodsData = await neighborhoodsResponse.json();
-                setNeighborhoods(neighborhoodsData);
+    const [people, setPeople] = useState([]); // Estado para armazenar as pessoas
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        // Fetch people from the backend
+        const fetchPeople = async () => {
+            try {
+                const response = await fetch('http://localhost:3001/api/pessoas');
+                const data = await response.json();
+                setPeople(data);
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching people:', error);
             }
         };
 
-        fetchData();
+        fetchPeople();
     }, []);
-
-    const handleCancel = () => { 
-        setFormData({
-            codigo: '',
-            nome: '',
-            cep: '',
-            endereco: '',
-            numero: '',
-            complemento: '',
-            telefone: '',
-            email: '',
-            cidade_id: null,
-            bairro_id: null
-        });
-        setSelectedCity(null);
-        setSelectedNeighborhood(null);
-        navigate('/');
-    };
 
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData(prevData => ({ ...prevData, [id]: value }));
     };
 
-    const handleCityChange = (e) => {
-        setSelectedCity(e.value);
-        setFormData(prevData => ({ ...prevData, cidade_id: e.value.id }));
-    };
-
-    const handleNeighborhoodChange = (e) => {
-        setSelectedNeighborhood(e.value);
-        setFormData(prevData => ({ ...prevData, bairro_id: e.value.id }));
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const postData = {
-            cidade_id: selectedCity?.id,
-            bairro_id: selectedNeighborhood?.id
-        };
+        console.log('Dados enviados:', formData); // Log dos dados enviados
+    
+        // Verifique se todos os campos necessários estão preenchidos
+        if (!formData.codigo || !formData.nome || !formData.cep || !formData.endereco || !formData.numero || !formData.telefone || !formData.email || !formData.cidade_id || !formData.bairro_id) {
+            alert('Por favor, preencha todos os campos.');
+            return;
+        }
+    
         try {
             const response = await fetch('http://localhost:3001/api/pessoas', {
                 method: 'POST',
@@ -95,17 +64,17 @@ export default function People() {
                 body: JSON.stringify({
                     id: formData.codigo,
                     nome: formData.nome,
-                    cidade_id: postData.cidade_id,
-                    bairro_id: postData.bairro_id,
                     cep: formData.cep,
                     endereco: formData.endereco,
                     numero: formData.numero,
                     complemento: formData.complemento,
                     telefone: formData.telefone,
-                    email: formData.email
+                    email: formData.email,
+                    cidade_id: formData.cidade_id,
+                    bairro_id: formData.bairro_id
                 }),
             });
-
+    
             if (response.ok) {
                 alert('Pessoa adicionada com sucesso!');
                 setFormData({
@@ -117,12 +86,20 @@ export default function People() {
                     complemento: '',
                     telefone: '',
                     email: '',
-                    cidade_id: null,
-                    bairro_id: null
+                    cidade_id: '',
+                    bairro_id: ''
                 });
-                setSelectedCity(null);
-                setSelectedNeighborhood(null);
+                // Atualiza a lista de pessoas após adicionar uma nova pessoa
+                const data = await response.json();
+                setPeople(prevPeople => [...prevPeople, data]);
             } else {
+                const text = await response.text();
+                try {
+                    const errorData = JSON.parse(text);
+                    console.error('Erro na resposta:', errorData); // Log do erro na resposta
+                } catch (e) {
+                    console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
+                }
                 throw new Error('Erro ao adicionar pessoa');
             }
         } catch (error) {
@@ -131,18 +108,43 @@ export default function People() {
         }
     };
 
+    const handleCancel = () => {
+        setFormData({
+            codigo: '',
+            nome: '',
+            cep: '',
+            endereco: '',
+            numero: '',
+            complemento: '',
+            telefone: '',
+            email: '',
+            cidade_id: '',
+            bairro_id: ''
+        });
+        navigate('/');
+    };
+
     return (
         <Card>
-            <h1>Cadastro de Pessoas</h1>
+            <h1>Cadastro de Pessoa</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
-                        {/* Conteúdo da aba "Lista" */}
+                        <div className="grid">
+                            {people.map(person => (
+                                <div key={person.id} className="col-12 md:col-6 lg:col-4">
+                                    <Card title={person.nome} subTitle={`Cidade ID: ${person.cidade_id}`}>
+                                        <p><strong>Código:</strong> {person.id}</p>
+                                        <p><strong>Telefone:</strong> {person.telefone}</p>
+                                    </Card>
+                                </div>
+                            ))}
+                        </div>
                     </TabPanel>
                     <TabPanel header="Incluir" leftIcon="pi pi-user-plus mr-2">
                         <form onSubmit={handleSubmit}>
                             <div className="formgrid grid mb-4">
-                                <div className="p-col-12 p-md-6 p-lg-4">
+                                <div className="col-12 md:col-6 lg:col-2">
                                     <FloatLabel>
                                         <InputText
                                             name="codigo"
@@ -154,7 +156,7 @@ export default function People() {
                                         <label htmlFor="codigo">Código</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="p-col-12 p-md-6 p-lg-8">
+                                <div className="col-12 md:col-6 lg:col-6">
                                     <FloatLabel>
                                         <InputText
                                             name="nome"
@@ -166,33 +168,7 @@ export default function People() {
                                         <label htmlFor="nome">Nome</label>
                                     </FloatLabel>
                                 </div>
-                            </div>
-                            <div className="formgrid grid mb-4">
-                                <div className="p-col-12 p-md-6 p-lg-4">
-                                    <FloatLabel>
-                                        <Dropdown
-                                            value={selectedCity}
-                                            options={cities}
-                                            optionLabel="nome" // Certifique-se de que o campo correto está sendo usado
-                                            placeholder="Selecione uma cidade"
-                                            onChange={handleCityChange}
-                                        />
-                                        <label htmlFor="cidade">Cidade</label>
-                                    </FloatLabel>
-                                </div>
-                                <div className="p-col-12 p-md-6 p-lg-4">
-                                    <FloatLabel>
-                                        <Dropdown
-                                            value={selectedNeighborhood}
-                                            options={neighborhoods}
-                                            optionLabel="nome" // Verifique se a chave correta é "nome"
-                                            placeholder="Selecione um bairro"
-                                            onChange={handleNeighborhoodChange}
-                                        />
-                                        <label htmlFor="bairro">Bairro</label>
-                                    </FloatLabel>
-                                </div>
-                                <div className="p-col-12 p-md-6 p-lg-4">
+                                <div className="col-12 md:col-6 lg:col-2">
                                     <FloatLabel>
                                         <InputText
                                             name="cep"
@@ -204,9 +180,7 @@ export default function People() {
                                         <label htmlFor="cep">CEP</label>
                                     </FloatLabel>
                                 </div>
-                            </div>
-                            <div className="formgrid grid mb-4">
-                                <div className="p-col-12 p-md-6 p-lg-4">
+                                <div className="col-12 md:col-6 lg:col-6">
                                     <FloatLabel>
                                         <InputText
                                             name="endereco"
@@ -218,7 +192,7 @@ export default function People() {
                                         <label htmlFor="endereco">Endereço</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="p-col-12 p-md-6 p-lg-4">
+                                <div className="col-12 md:col-6 lg:col-2">
                                     <FloatLabel>
                                         <InputText
                                             name="numero"
@@ -230,7 +204,7 @@ export default function People() {
                                         <label htmlFor="numero">Número</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="p-col-12 p-md-6 p-lg-4">
+                                <div className="col-12 md:col-6 lg:col-2">
                                     <FloatLabel>
                                         <InputText
                                             name="complemento"
@@ -242,9 +216,7 @@ export default function People() {
                                         <label htmlFor="complemento">Complemento</label>
                                     </FloatLabel>
                                 </div>
-                            </div>
-                            <div className="formgrid grid mb-4">
-                                <div className="p-col-12 p-md-6 p-lg-4">
+                                <div className="col-12 md:col-6 lg:col-2">
                                     <FloatLabel>
                                         <InputText
                                             name="telefone"
@@ -256,7 +228,7 @@ export default function People() {
                                         <label htmlFor="telefone">Telefone</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="p-col-12 p-md-6 p-lg-4">
+                                <div className="col-12 md:col-6 lg:col-2">
                                     <FloatLabel>
                                         <InputText
                                             name="email"
@@ -266,6 +238,30 @@ export default function People() {
                                             style={{ width: '100%' }}
                                         />
                                         <label htmlFor="email">Email</label>
+                                    </FloatLabel>
+                                </div>
+                                <div className="col-12 md:col-6 lg:col-2">
+                                    <FloatLabel>
+                                        <InputText
+                                            name="cidade_id"
+                                            id="cidade_id"
+                                            value={formData.cidade_id}
+                                            onChange={handleChange}
+                                            style={{ width: '100%' }}
+                                        />
+                                        <label htmlFor="cidade_id">Cidade ID</label>
+                                    </FloatLabel>
+                                </div>
+                                <div className="col-12 md:col-6 lg:col-2">
+                                    <FloatLabel>
+                                        <InputText
+                                            name="bairro_id"
+                                            id="bairro_id"
+                                            value={formData.bairro_id}
+                                            onChange={handleChange}
+                                            style={{ width: '100%' }}
+                                        />
+                                        <label htmlFor="bairro_id">Bairro ID</label>
                                     </FloatLabel>
                                 </div>
                             </div>

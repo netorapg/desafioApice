@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { InputText } from 'primereact/inputtext';
@@ -14,7 +14,24 @@ export default function City() {
         uf: ''
     });
 
+    const [cities, setCities] = useState([]);
+
     const navigate = useNavigate();
+
+
+    useEffect(() => {
+        const fetchCities = async () => {
+            try {
+                const response = await fetch ('http://localhost:3001/api/cidades');
+                const data = await response.json();
+                setCities(data);
+            } catch (error) {
+                console.error('Error fetching cities:', error);
+                alert('Erro ao buscar cidades');
+            }
+        };
+        fetchCities();
+    }, []);
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -82,7 +99,15 @@ export default function City() {
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
-                        {/* Conteúdo da aba "Lista" */}
+                    <div className="grid">
+                            {cities.map(city => (
+                                <div key={city.id} className="col-12 md:col-6 lg:col-4">
+                                    <Card title={city.nome} subTitle={city.uf}>
+                                        <p><strong>Código:</strong> {city.id}</p>
+                                    </Card>
+                                </div>
+                            ))}
+                        </div>
                     </TabPanel>
                     <TabPanel header="Incluir" leftIcon="pi pi-map-marker mr-2">
                         <form onSubmit={handleSubmit}>

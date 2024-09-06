@@ -1,19 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { InputText } from 'primereact/inputtext';
 import { FloatLabel } from 'primereact/floatlabel';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import 'primeflex/primeflex.css';
-import { useNavigate } from 'react-router-dom';
 
-export default function Neighborhood() {
+export default function Bairro() {
     const [formData, setFormData] = useState({
         codigo: '',
-        bairro: ''
+        bairro: '',
     });
 
+    const [neighborhoods, setNeighborhoods] = useState([]); // Estado para armazenar os bairros
+
     const navigate = useNavigate();
+
+    useEffect(() => {
+        // Fetch neighborhoods from the backend
+        const fetchNeighborhoods = async () => {
+            try {
+                const response = await fetch('http://localhost:3001/api/bairros');
+                const data = await response.json();
+                setNeighborhoods(data);
+            } catch (error) {
+                console.error('Error fetching neighborhoods:', error);
+            }
+        };
+
+        fetchNeighborhoods();
+    }, []);
 
     const handleChange = (e) => {
         const { id, value } = e.target;
@@ -25,7 +42,7 @@ export default function Neighborhood() {
         console.log('Dados enviados:', formData); // Log dos dados enviados
     
         // Verifique se todos os campos necessários estão preenchidos
-        if (!formData.codigo || !formData.bairro) {
+        if (!formData.codigo || !formData.bairro || !formData.cidade_id) {
             alert('Por favor, preencha todos os campos.');
             return;
         }
@@ -46,8 +63,11 @@ export default function Neighborhood() {
                 alert('Bairro adicionado com sucesso!');
                 setFormData({
                     codigo: '',
-                    bairro: ''
+                    bairro: '',
                 });
+                // Atualiza a lista de bairros após adicionar um novo bairro
+                const data = await response.json();
+                setNeighborhoods(prevNeighborhoods => [...prevNeighborhoods, data]);
             } else {
                 const text = await response.text();
                 try {
@@ -67,17 +87,26 @@ export default function Neighborhood() {
     const handleCancel = () => {
         setFormData({
             codigo: '',
-            bairro: ''
+            bairro: '',
         });
         navigate('/');
     };
+
     return (
         <Card>
             <h1>Cadastro de Bairro</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
-                        {/* Conteúdo da aba "Lista" */}
+                        <div className="grid">
+                            {neighborhoods.map(neighborhood => (
+                                <div key={neighborhood.id} className="col-12 md:col-6 lg:col-4">
+                                    <Card title={neighborhood.nome} >
+                                        <p><strong>Código:</strong> {neighborhood.id}</p>
+                                    </Card>
+                                </div>
+                            ))}
+                        </div>
                     </TabPanel>
                     <TabPanel header="Incluir" leftIcon="pi pi-map-marker mr-2">
                         <form onSubmit={handleSubmit}>
@@ -104,6 +133,18 @@ export default function Neighborhood() {
                                             style={{ width: '100%' }}
                                         />
                                         <label htmlFor="bairro">Bairro</label>
+                                    </FloatLabel>
+                                </div>
+                                <div className="col-12 md:col-6 lg:col-2">
+                                    <FloatLabel>
+                                        <InputText
+                                            name="cidade_id"
+                                            id="cidade_id"
+                                            value={formData.cidade_id}
+                                            onChange={handleChange}
+                                            style={{ width: '100%' }}
+                                        />
+                                        <label htmlFor="cidade_id">Cidade ID</label>
                                     </FloatLabel>
                                 </div>
                             </div>
