@@ -3,7 +3,7 @@ import { TabView, TabPanel } from 'primereact/tabview';
 import { InputText } from 'primereact/inputtext';
 import { FloatLabel } from 'primereact/floatlabel';
 import 'primeflex/primeflex.css';
-import { CascadeSelect } from 'primereact/cascadeselect';
+import { Dropdown } from 'primereact/dropdown';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 
@@ -29,12 +29,10 @@ export default function People() {
             try {
                 const citiesResponse = await fetch('http://localhost:3001/api/cidades');
                 const citiesData = await citiesResponse.json();
-                console.log('Cities data:', citiesData); // Adicione este log
                 setCities(citiesData);
 
                 const neighborhoodsResponse = await fetch('http://localhost:3001/api/bairros');
                 const neighborhoodsData = await neighborhoodsResponse.json();
-                console.log('Neighborhoods data:', neighborhoodsData); // Adicione este log
                 setNeighborhoods(neighborhoodsData);
             } catch (error) {
                 console.error('Error fetching data:', error);
@@ -51,13 +49,18 @@ export default function People() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        const postData = {
+            ...formData,
+            cidade_id: selectedCity?.id, // Adiciona o ID da cidade selecionada
+            bairro_id: selectedNeighborhood?.id // Adiciona o ID do bairro selecionado
+        };
         try {
             const response = await fetch('http://localhost:3001/api/pessoas', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(postData),
             });
 
             if (response.ok) {
@@ -122,26 +125,24 @@ export default function People() {
                             <div className="formgrid grid mb-4">
                                 <div className="p-col-12 p-md-6 p-lg-4">
                                     <FloatLabel>
-                                    <CascadeSelect
-                            value={selectedCity}
-                            options={cities}
-                            optionLabel="name" // Certifique-se de que o campo correto está sendo usado
-                            placeholder="Selecione uma cidade"
-                            onChange={(e) => setSelectedCity(e.value)}
-                        />
+                                        <Dropdown
+                                            value={selectedCity}
+                                            options={cities}
+                                            optionLabel="nome" // Certifique-se de que o campo correto está sendo usado
+                                            placeholder="Selecione uma cidade"
+                                            onChange={(e) => setSelectedCity(e.value)}
+                                        />
+                                        <label htmlFor="cidade">Cidade</label>
                                     </FloatLabel>
                                 </div>
                                 <div className="p-col-12 p-md-6 p-lg-4">
                                     <FloatLabel>
-                                        <CascadeSelect
-                                            name="bairro"
-                                            id="bairro"
+                                        <Dropdown
                                             value={selectedNeighborhood}
-                                            onChange={(e) => setSelectedNeighborhood(e.value)}
                                             options={neighborhoods}
-                                            optionLabel="name" // Verifique se a chave correta é "name"
-                                            className="w-full"
-                                            style={{ minWidth: '14rem' }}
+                                            optionLabel="nome" // Verifique se a chave correta é "nome"
+                                            placeholder="Selecione um bairro"
+                                            onChange={(e) => setSelectedNeighborhood(e.value)}
                                         />
                                         <label htmlFor="bairro">Bairro</label>
                                     </FloatLabel>
@@ -219,32 +220,11 @@ export default function People() {
                                             onChange={handleChange}
                                             style={{ width: '100%' }}
                                         />
-                                        <label htmlFor="email">E-mail</label>
+                                        <label htmlFor="email">Email</label>
                                     </FloatLabel>
                                 </div>
                             </div>
-                            <div className="card flex flex-wrap justify-content-left gap-3">
-                                <Button type="submit" label="Confirmar" severity="success" />
-                                <Button
-                                    type="button"
-                                    label="Cancelar"
-                                    severity="danger"
-                                    onClick={() => {
-                                        setFormData({
-                                            codigo: '',
-                                            nome: '',
-                                            cep: '',
-                                            endereco: '',
-                                            numero: '',
-                                            complemento: '',
-                                            telefone: '',
-                                            email: ''
-                                        });
-                                        setSelectedCity(null);
-                                        setSelectedNeighborhood(null);
-                                    }}
-                                />
-                            </div>
+                            <Button type="submit" label="Adicionar Pessoa" icon="pi pi-check" />
                         </form>
                     </TabPanel>
                 </TabView>
