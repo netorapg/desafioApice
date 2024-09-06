@@ -6,6 +6,8 @@ import 'primeflex/primeflex.css';
 import { Dropdown } from 'primereact/dropdown';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
+import { Navigate } from 'react-router-dom';
+
 
 export default function People() {
     const [selectedCity, setSelectedCity] = useState(null);
@@ -20,7 +22,9 @@ export default function People() {
         numero: '',
         complemento: '',
         telefone: '',
-        email: ''
+        email: '',
+        cidade_id: null,
+        bairro_id: null
     });
 
     useEffect(() => {
@@ -42,17 +46,44 @@ export default function People() {
         fetchData();
     }, []);
 
+    const handleCancel = () => { 
+        setFormData({
+            codigo: '',
+            nome: '',
+            cep: '',
+            endereco: '',
+            numero: '',
+            complemento: '',
+            telefone: '',
+            email: '',
+            cidade_id: null,
+            bairro_id: null
+        });
+        setSelectedCity(null);
+        setSelectedNeighborhood(null);
+        Navigate('/');
+    };
+
     const handleChange = (e) => {
         const { id, value } = e.target;
         setFormData(prevData => ({ ...prevData, [id]: value }));
     };
 
+    const handleCityChange = (e) => {
+        setSelectedCity(e.value);
+        setFormData(prevData => ({ ...prevData, cidade_id: e.value.id }));
+    };
+
+    const handleNeighborhoodChange = (e) => {
+        setSelectedNeighborhood(e.value);
+        setFormData(prevData => ({ ...prevData, bairro_id: e.value.id }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         const postData = {
-            ...formData,
-            cidade_id: selectedCity?.id, // Adiciona o ID da cidade selecionada
-            bairro_id: selectedNeighborhood?.id // Adiciona o ID do bairro selecionado
+            cidade_id: selectedCity?.id,
+            bairro_id: selectedNeighborhood?.id
         };
         try {
             const response = await fetch('http://localhost:3001/api/pessoas', {
@@ -60,7 +91,18 @@ export default function People() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(postData),
+                body: JSON.stringify({
+                    id: formData.codigo,
+                    nome: formData.nome,
+                    cidade_id: postData.cidade_id,
+                    bairro_id: postData.bairro_id,
+                    cep: formData.cep,
+                    endereco: formData.endereco,
+                    numero: formData.numero,
+                    complemento: formData.complemento,
+                    telefone: formData.telefone,
+                    email: formData.email
+                }),
             });
 
             if (response.ok) {
@@ -73,7 +115,9 @@ export default function People() {
                     numero: '',
                     complemento: '',
                     telefone: '',
-                    email: ''
+                    email: '',
+                    cidade_id: null,
+                    bairro_id: null
                 });
                 setSelectedCity(null);
                 setSelectedNeighborhood(null);
@@ -130,7 +174,7 @@ export default function People() {
                                             options={cities}
                                             optionLabel="nome" // Certifique-se de que o campo correto está sendo usado
                                             placeholder="Selecione uma cidade"
-                                            onChange={(e) => setSelectedCity(e.value)}
+                                            onChange={handleCityChange}
                                         />
                                         <label htmlFor="cidade">Cidade</label>
                                     </FloatLabel>
@@ -142,7 +186,7 @@ export default function People() {
                                             options={neighborhoods}
                                             optionLabel="nome" // Verifique se a chave correta é "nome"
                                             placeholder="Selecione um bairro"
-                                            onChange={(e) => setSelectedNeighborhood(e.value)}
+                                            onChange={handleNeighborhoodChange}
                                         />
                                         <label htmlFor="bairro">Bairro</label>
                                     </FloatLabel>
@@ -224,7 +268,15 @@ export default function People() {
                                     </FloatLabel>
                                 </div>
                             </div>
-                            <Button type="submit" label="Adicionar Pessoa" icon="pi pi-check" />
+                            <div className="card flex flex-wrap justify-content-left gap-3">
+                                <Button type="submit" label="Confirmar" severity="success" />
+                                <Button
+                                    type="button"
+                                    label="Cancelar"
+                                    severity="danger"
+                                    onClick={handleCancel}
+                                />
+                            </div>
                         </form>
                     </TabPanel>
                 </TabView>
