@@ -93,6 +93,27 @@ export default function City() {
         navigate('/');
     };
 
+    const handleDelete = async (cityId) => {
+        if (window.confirm('Tem certeza que deseja deletar esta cidade?')) {
+            try {
+                const response = await fetch(`http://localhost:3001/api/cidades/${cityId}`, {
+                    method: 'DELETE',
+                });
+    
+                if (response.ok) {
+                    alert('Cidade deletada com sucesso!');
+                    setCities(cities.filter(city => city.id !== cityId)); // Atualizar a lista localmente
+                } else {
+                    alert('Erro ao deletar cidade');
+                }
+            } catch (error) {
+                console.error('Erro ao deletar cidade:', error);
+                alert('Erro ao deletar cidade');
+            }
+        }
+    };
+    
+    
     return (
         <Card>
             <h1>Cadastro de Cidade</h1>
@@ -104,6 +125,12 @@ export default function City() {
                                 <div key={city.id} className="col-12 md:col-6 lg:col-4">
                                     <Card title={city.nome} subTitle={city.uf}>
                                         <p><strong>Código:</strong> {city.id}</p>
+                                        <Button
+                                            label="Deletar"
+                                            icon="pi pi-trash"
+                                            className="p-button-danger"
+                                            onClick={() => handleDelete(city.id)}
+                                        />
                                     </Card>
                                 </div>
                             ))}

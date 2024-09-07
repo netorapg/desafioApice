@@ -124,6 +124,33 @@ export default function Pessoa() {
         navigate('/');
     };
 
+    const handleDelete = async (personId) => {
+        if (window.confirm('Tem certeza que deseja deletar esta pessoa?')) {
+            try {
+                const response = await fetch(`http://localhost:3001/api/pessoas/${personId}`, {
+                    method: 'DELETE',
+                });
+    
+                if (response.ok) {
+                    alert('Pessoa deletada com sucesso!');
+                    setPeople(prevPeople => prevPeople.filter(person => person.id !== personId));
+                } else {
+                    const text = await response.text();
+                    try {
+                        const errorData = JSON.parse(text);
+                        console.error('Erro na resposta:', errorData); // Log do erro na resposta
+                    } catch (e) {
+                        console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
+                    }
+                    throw new Error('Erro ao deletar pessoa');
+                }
+            } catch (error) {
+                console.error('Error deleting person:', error);
+                alert('Erro ao deletar pessoa');
+            }
+        }
+    }
+
     return (
         <Card>
             <h1>Cadastro de Pessoa</h1>
@@ -136,6 +163,12 @@ export default function Pessoa() {
                                     <Card title={person.nome} subTitle={`Cidade ID: ${person.cidade_id}`}>
                                         <p><strong>Código:</strong> {person.id}</p>
                                         <p><strong>Telefone:</strong> {person.telefone}</p>
+                                        <Button 
+                                            label="Excluir" 
+                                            icon="pi pi-trash" 
+                                            className="p-button-danger" 
+                                            onClick={() => handleDelete(person.id)}
+                                        />
                                     </Card>
                                 </div>
                             ))}

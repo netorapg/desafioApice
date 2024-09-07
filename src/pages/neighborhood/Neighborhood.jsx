@@ -42,7 +42,7 @@ export default function Bairro() {
         console.log('Dados enviados:', formData); // Log dos dados enviados
     
         // Verifique se todos os campos necessários estão preenchidos
-        if (!formData.codigo || !formData.bairro || !formData.cidade_id) {
+        if (!formData.codigo || !formData.bairro) {
             alert('Por favor, preencha todos os campos.');
             return;
         }
@@ -92,6 +92,33 @@ export default function Bairro() {
         navigate('/');
     };
 
+    const handleDelete = async (neighborhoodId) => {
+        if (window.confirm('Tem certeza que deseja deletar este bairro?')) {
+            try {
+                const response = await fetch(`http://localhost:3001/api/bairros/${neighborhoodId}`, {
+                    method: 'DELETE',
+                });
+    
+                if (response.ok) {
+                    alert('Bairro deletado com sucesso!');
+                    setNeighborhoods(prevNeighborhoods => prevNeighborhoods.filter(neighborhood => neighborhood.id !== neighborhoodId));
+                } else {
+                    const text = await response.text();
+                    try {
+                        const errorData = JSON.parse(text);
+                        console.error('Erro na resposta:', errorData); // Log do erro na resposta
+                    } catch (e) {
+                        console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
+                    }
+                    throw new Error('Erro ao deletar bairro');
+                }
+            } catch (error) {
+                console.error('Error deleting neighborhood:', error);
+                alert('Erro ao deletar bairro');
+            }
+        }
+    }
+
     return (
         <Card>
             <h1>Cadastro de Bairro</h1>
@@ -103,6 +130,12 @@ export default function Bairro() {
                                 <div key={neighborhood.id} className="col-12 md:col-6 lg:col-4">
                                     <Card title={neighborhood.nome} >
                                         <p><strong>Código:</strong> {neighborhood.id}</p>
+                                        <Button
+                                            label="Deletar"
+                                            icon="pi pi-trash"
+                                            className="p-button-danger"
+                                            onClick={() => handleDelete(neighborhood.id)}
+                                        />
                                     </Card>
                                 </div>
                             ))}
@@ -133,18 +166,6 @@ export default function Bairro() {
                                             style={{ width: '100%' }}
                                         />
                                         <label htmlFor="bairro">Bairro</label>
-                                    </FloatLabel>
-                                </div>
-                                <div className="col-12 md:col-6 lg:col-2">
-                                    <FloatLabel>
-                                        <InputText
-                                            name="cidade_id"
-                                            id="cidade_id"
-                                            value={formData.cidade_id}
-                                            onChange={handleChange}
-                                            style={{ width: '100%' }}
-                                        />
-                                        <label htmlFor="cidade_id">Cidade ID</label>
                                     </FloatLabel>
                                 </div>
                             </div>

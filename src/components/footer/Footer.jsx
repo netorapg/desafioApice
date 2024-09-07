@@ -43,7 +43,7 @@ export default function Footer() {
     return (
         <div className="footer">
             <p>
-                {location && `${location}, `} {formattedDate} | {formattedTime}
+                {location && `${location}, `} {formattedDate} | {formattedTime} | 
             </p>
         </div>
     );
