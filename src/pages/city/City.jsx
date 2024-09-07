@@ -15,21 +15,23 @@ export default function City() {
     });
 
     const [cities, setCities] = useState([]);
+    const [editingCityId, setEditingCityId] = useState(null); // Estado para edição
 
     const navigate = useNavigate();
 
+    // Função fetchCities movida para fora do useEffect
+    const fetchCities = async () => {
+        try {
+            const response = await fetch('http://localhost:3001/api/cidades');
+            const data = await response.json();
+            setCities(data);
+        } catch (error) {
+            console.error('Error fetching cities:', error);
+            alert('Erro ao buscar cidades');
+        }
+    };
 
     useEffect(() => {
-        const fetchCities = async () => {
-            try {
-                const response = await fetch ('http://localhost:3001/api/cidades');
-                const data = await response.json();
-                setCities(data);
-            } catch (error) {
-                console.error('Error fetching cities:', error);
-                alert('Erro ao buscar cidades');
-            }
-        };
         fetchCities();
     }, []);
 
@@ -40,17 +42,14 @@ export default function City() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Dados enviados:', formData); // Log dos dados enviados
-    
-        // Verifique se todos os campos necessários estão preenchidos
-        if (!formData.codigo || !formData.cidade || !formData.uf) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-    
+        const url = editingCityId 
+            ? `http://localhost:3001/api/cidades/${editingCityId}` 
+            : 'http://localhost:3001/api/cidades';
+        const method = editingCityId ? 'PUT' : 'POST';
+
         try {
-            const response = await fetch('http://localhost:3001/api/cidades', {
-                method: 'POST',
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -60,27 +59,22 @@ export default function City() {
                     uf: formData.uf
                 }),
             });
-    
+
             if (response.ok) {
-                alert('Cidade adicionada com sucesso!');
+                alert(editingCityId ? 'Cidade atualizada com sucesso!' : 'Cidade adicionada com sucesso!');
                 setFormData({
                     codigo: '',
                     cidade: '',
                     uf: ''
                 });
+                setEditingCityId(null); // Resetar estado de edição
+                fetchCities(); // Atualizar a lista de cidades
             } else {
-                const text = await response.text();
-                try {
-                    const errorData = JSON.parse(text);
-                    console.error('Erro na resposta:', errorData); // Log do erro na resposta
-                } catch (e) {
-                    console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
-                }
-                throw new Error('Erro ao adicionar cidade');
+                throw new Error(editingCityId ? 'Erro ao atualizar cidade' : 'Erro ao adicionar cidade');
             }
         } catch (error) {
-            console.error('Error adding city:', error);
-            alert('Erro ao adicionar cidade');
+            console.error(error.message);
+            alert(error.message);
         }
     };
 
@@ -90,53 +84,72 @@ export default function City() {
             cidade: '',
             uf: ''
         });
+        setEditingCityId(null);
         navigate('/');
     };
 
+    const handleEdit = (city) => {
+        setFormData({
+            codigo: city.id,
+            cidade: city.nome,
+            uf: city.uf
+        });
+        setEditingCityId(city.id); // Definir o ID da cidade que está sendo editada
+    };
+
     const handleDelete = async (cityId) => {
-        if (window.confirm('Tem certeza que deseja deletar esta cidade?')) {
-            try {
-                const response = await fetch(`http://localhost:3001/api/cidades/${cityId}`, {
-                    method: 'DELETE',
-                });
-    
-                if (response.ok) {
-                    alert('Cidade deletada com sucesso!');
-                    setCities(cities.filter(city => city.id !== cityId)); // Atualizar a lista localmente
-                } else {
-                    alert('Erro ao deletar cidade');
-                }
-            } catch (error) {
-                console.error('Erro ao deletar cidade:', error);
-                alert('Erro ao deletar cidade');
+        if (!window.confirm('Você tem certeza que deseja excluir esta cidade?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:3001/api/cidades/${cityId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                alert('Cidade excluída com sucesso!');
+                setCities(cities.filter(city => city.id !== cityId)); // Atualizar a lista de cidades
+            } else {
+                throw new Error('Erro ao excluir cidade');
             }
+        } catch (error) {
+            console.error('Erro ao excluir cidade:', error);
+            alert('Erro ao excluir cidade');
         }
     };
-    
-    
+
     return (
         <Card>
-            <h1>Cadastro de Cidade</h1>
+            <h1>{editingCityId ? 'Editar Cidade' : 'Cadastro de Cidade'}</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
-                    <div className="grid">
+                        <div className="grid">
                             {cities.map(city => (
                                 <div key={city.id} className="col-12 md:col-6 lg:col-4">
                                     <Card title={city.nome} subTitle={city.uf}>
                                         <p><strong>Código:</strong> {city.id}</p>
-                                        <Button
-                                            label="Deletar"
-                                            icon="pi pi-trash"
-                                            className="p-button-danger"
-                                            onClick={() => handleDelete(city.id)}
-                                        />
+                                        <div className="flex justify-content-between">
+                                            <Button 
+                                                label="Editar" 
+                                                icon="pi pi-pencil" 
+                                                onClick={() => handleEdit(city)} 
+                                                className="mr-2"
+                                            />
+                                            <Button 
+                                                label="Deletar" 
+                                                icon="pi pi-trash" 
+                                                className="p-button-danger" 
+                                                onClick={() => handleDelete(city.id)} 
+                                            />
+                                        </div>
                                     </Card>
                                 </div>
                             ))}
                         </div>
                     </TabPanel>
-                    <TabPanel header="Incluir" leftIcon="pi pi-map-marker mr-2">
+                    <TabPanel header={editingCityId ? "Editar" : "Incluir"} leftIcon="pi pi-map-marker mr-2">
                         <form onSubmit={handleSubmit}>
                             <div className="formgrid grid mb-4">
                                 <div className="col-12 md:col-6 lg:col-2">
@@ -147,6 +160,7 @@ export default function City() {
                                             value={formData.codigo}
                                             onChange={handleChange}
                                             style={{ width: '100%' }}
+                                            disabled={editingCityId !== null} // Desabilitar o campo "Código" ao editar
                                         />
                                         <label htmlFor="codigo">Código</label>
                                     </FloatLabel>
