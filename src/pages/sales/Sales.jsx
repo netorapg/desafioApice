@@ -1,32 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TabView, TabPanel } from 'primereact/tabview';
 import { InputText } from 'primereact/inputtext';
 import { FloatLabel } from 'primereact/floatlabel';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Calendar } from 'primereact/calendar';
-import { CascadeSelect } from 'primereact/cascadeselect';
+import { Dropdown } from 'primereact/dropdown';
 import 'primeflex/primeflex.css';
 
 export default function Sales() {
     const [date, setDate] = useState(null);
     const [selectedPerson, setSelectedPerson] = useState(null);
     const [selectedProduct, setSelectedProduct] = useState(null);
-    const people = [
-        { name: 'João'},
-        { name: 'Maria'},
-        { name: 'Carlos'},
-        { name: 'Pedro'},
-        { name: 'Ana'},
-        { name: 'Renato Augusto Platz Guimarães Neto'}
-    ];
-    const products = [
-        { name: 'Caneta BIC' },
-        { name: 'Caderno' },
-        { name: 'Lápis' },
-        { name: 'Borracha' },
-        { name: 'Apontador' }
-    ];
+    const [people, setPeople] = useState([]);
+    const [products, setProducts] = useState([]);
+    
+    // Carregar pessoas da API
+    useEffect(() => {
+        fetch('http://localhost:3001/api/pessoas')
+            .then(response => response.json())
+            .then(data => setPeople(data))
+            .catch(error => console.error('Erro ao buscar pessoas:', error));
+    }, []);
+
+    // Carregar produtos da API
+    useEffect(() => {
+        fetch('http://localhost:3001/api/produtos')
+            .then(response => response.json())
+            .then(data => setProducts(data))
+            .catch(error => console.error('Erro ao buscar produtos:', error));
+    }, []);
+
     return (
         <Card>
             <h1>Venda</h1>
@@ -51,26 +55,24 @@ export default function Sales() {
                             </div>
                             <div className="col-12 md:col-6 lg:col-2">
                                 <FloatLabel>
-                                <CascadeSelect name="pessoa" id="pessoa" value={selectedPerson} onChange={(e) => setSelectedPerson(e.value)} options={people}
-                                    optionLabel="name" optionGroupLabel="name" optionGroupChildren={['people']}
-                                    className="w-full md:w-14rem" breakpoint="767px" style={{ minWidth: '14rem' }} />
-                                <label htmlFor="pessoa">Pessoa</label>
+                                    <Dropdown name="pessoa" id="pessoa" value={selectedPerson} onChange={(e) => setSelectedPerson(e.value)} 
+                                        options={people} optionLabel="nome" placeholder="Selecione a pessoa" className="w-full" />
+                                    <label htmlFor="pessoa">Pessoa</label>
                                 </FloatLabel>
                             </div>
                         </div>
                         <div className="formgrid grid mb-4">
                             <div className="col-12 md:col-6 lg:col-2">
                                 <FloatLabel>
-                                <CascadeSelect name="produto" id="produto" value={selectedProduct} onChange={(e) => setSelectedProduct(e.value)} options={products}
-                                    optionLabel="name" optionGroupLabel="name" optionGroupChildren={['products']}
-                                    className="w-full md:w-14rem" breakpoint="767px" style={{ minWidth: '14rem' }} />
-                                <label htmlFor="produto">Produto</label>
+                                    <Dropdown name="produto" id="produto" value={selectedProduct} onChange={(e) => setSelectedProduct(e.value)} 
+                                        options={products} optionLabel="nome" placeholder="Selecione o produto" className="w-full" />
+                                    <label htmlFor="produto">Produto</label>
                                 </FloatLabel>
                             </div>
                             <div className="mx-4 col-12 md:col-6 lg:col-2">
                                 <FloatLabel>
                                     <InputText name="qtde-venda" id="qtde-venda" style={{ width: '100%' }} />
-                                    <label htmlFor="nome">Qtde Venda</label>
+                                    <label htmlFor="qtde-venda">Qtde Venda</label>
                                 </FloatLabel>
                             </div>
                             <div className="col-12 md:col-6 lg:col-2">
@@ -88,7 +90,6 @@ export default function Sales() {
                             <div className='col-12 md:col-6 lg:col-2'>
                                 <Button icon="pi pi-cart-plus" severity='secondary' outlined />
                             </div>
-                            
                         </div>
                         <div className="card flex flex-wrap justify-content-left gap-3">
                             <Button label="Confirmar" severity="success" />
