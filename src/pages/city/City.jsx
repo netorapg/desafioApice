@@ -130,20 +130,17 @@ export default function City() {
                                 <div key={city.id} className="col-12 md:col-6 lg:col-4">
                                     <Card title={city.nome} subTitle={city.uf}>
                                         <p><strong>Código:</strong> {city.id}</p>
-                                        <div className="flex justify-content-between">
-                                            <Button 
-                                                label="Editar" 
+                                            <Button  
                                                 icon="pi pi-pencil" 
+                                                className="p-button-warning"
                                                 onClick={() => handleEdit(city)} 
-                                                className="mr-2"
                                             />
-                                            <Button 
-                                                label="Deletar" 
+                                            <Button                                             
                                                 icon="pi pi-trash" 
                                                 className="p-button-danger" 
                                                 onClick={() => handleDelete(city.id)} 
+                                                style={{ marginLeft: '10px' }}
                                             />
-                                        </div>
                                     </Card>
                                 </div>
                             ))}
@@ -191,8 +188,9 @@ export default function City() {
                                 </div>
                             </div>
                             <div className="card flex flex-wrap justify-content-left gap-3">
-                                <Button type="submit" label="Confirmar" severity="success" />
+                                <Button type="submit" label="Confirmar" severity="success" icon="pi pi-verified" />
                                 <Button
+                                    icon="pi pi-times-circle"
                                     type="button"
                                     label="Cancelar"
                                     severity="danger"

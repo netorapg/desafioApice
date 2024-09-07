@@ -208,22 +208,19 @@ export default function Pessoa() {
                     <TabPanel header="Lista">
                         <div className="grid">
                             {people.map(person => (
-                                <div key={person.id} className="col-12 md:col-6 lg:col-4">
+                                <div key={person.id} className="col-12 md:col-6 lg:col-4 mb-3">
                                     <Card title={person.nome} subTitle={`Cidade ID: ${person.cidade_id}`}>
                                         <p><strong>Código:</strong> {person.id}</p>
                                         <p><strong>Telefone:</strong> {person.telefone}</p>
                                         <Button
-                                            label="Editar"
                                             icon="pi pi-pencil"
-                                            className="p-button-warning"
+                                            className="p-button-warning mr-2"
                                             onClick={() => handleEdit(person)}
                                         />
-                                        <Button 
-                                            label="Excluir" 
+                                        <Button  
                                             icon="pi pi-trash" 
                                             className="p-button-danger" 
                                             onClick={() => handleDelete(person.id)}
-                                            style={{ marginLeft: '10px' }}
                                         />
                                     </Card>
                                 </div>
@@ -233,7 +230,7 @@ export default function Pessoa() {
                     <TabPanel header="Incluir" leftIcon="pi pi-user-plus mr-2">
                         <form onSubmit={handleSubmit}>
                             <div className="formgrid grid mb-4">
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="codigo"
@@ -245,7 +242,7 @@ export default function Pessoa() {
                                         <label htmlFor="codigo">Código</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-6">
+                                <div className="col-12 md:col-6 lg:col-6 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="nome"
@@ -257,7 +254,7 @@ export default function Pessoa() {
                                         <label htmlFor="nome">Nome</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="cep"
@@ -269,7 +266,7 @@ export default function Pessoa() {
                                         <label htmlFor="cep">CEP</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-6">
+                                <div className="col-12 md:col-6 lg:col-6 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="endereco"
@@ -281,7 +278,7 @@ export default function Pessoa() {
                                         <label htmlFor="endereco">Endereço</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="numero"
@@ -293,7 +290,7 @@ export default function Pessoa() {
                                         <label htmlFor="numero">Número</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="complemento"
@@ -305,7 +302,7 @@ export default function Pessoa() {
                                         <label htmlFor="complemento">Complemento</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="telefone"
@@ -317,7 +314,7 @@ export default function Pessoa() {
                                         <label htmlFor="telefone">Telefone</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="email"
@@ -329,7 +326,7 @@ export default function Pessoa() {
                                         <label htmlFor="email">Email</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <Dropdown
                                             value={formData.cidade_id}
@@ -342,7 +339,7 @@ export default function Pessoa() {
                                         <label htmlFor="cidade_id">Cidade</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2">
+                                <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
                                         <Dropdown
                                             value={formData.bairro_id}
@@ -357,8 +354,9 @@ export default function Pessoa() {
                                 </div>
                             </div>
                             <div className="card flex flex-wrap justify-content-left gap-3">
-                                <Button type="submit" label="Confirmar" severity="success" />
+                                <Button type="submit" label="Confirmar" severity="success" icon="pi pi-verified" />
                                 <Button
+                                    icon="pi pi-times-circle"
                                     type="button"
                                     label="Cancelar"
                                     severity="danger"

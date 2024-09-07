@@ -116,13 +116,11 @@ export default function Bairro() {
                                     <Card title={bairro.nome}>
                                         <p><strong>Código:</strong> {bairro.id}</p>
                                         <Button
-                                            label="Editar"
                                             icon="pi pi-pencil"
                                             className="p-button-warning"
                                             onClick={() => handleEdit(bairro)}
                                         />
                                         <Button
-                                            label="Deletar"
                                             icon="pi pi-trash"
                                             className="p-button-danger"
                                             onClick={() => handleDelete(bairro.id)}
@@ -163,8 +161,9 @@ export default function Bairro() {
                                 </div>
                             </div>
                             <div className="card flex flex-wrap justify-content-left gap-3">
-                                <Button type="submit" label={editingId ? 'Atualizar' : 'Confirmar'} severity="success" />
+                                <Button type="submit" label={editingId ? 'Atualizar' : 'Confirmar'} severity="success" icon="pi pi-verified"/>
                                 <Button
+                                    icon="pi pi-times-circle"
                                     type="button"
                                     label="Cancelar"
                                     severity="danger"

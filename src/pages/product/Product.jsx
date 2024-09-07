@@ -141,13 +141,11 @@ export default function Product() {
                                         <p><strong>Código:</strong> {products.id}</p>
                                         <p><strong>Valor Venda:</strong> {products.preco}</p>
                                         <Button
-                                            label="Editar"
                                             icon="pi pi-pencil"
                                             className="p-button-warning"
                                             onClick={() => handleEdit(products)}
                                         />
                                         <Button 
-                                            label="Excluir" 
                                             icon="pi pi-trash" 
                                             className="p-button-danger" 
                                             onClick={() => handleDelete(products.id)}
@@ -200,8 +198,9 @@ export default function Product() {
                                 </div>
                             </div>
                             <div className="card flex flex-wrap justify-content-left gap-3">
-                                <Button type="submit" label="Confirmar" severity="success" />
+                                <Button type="submit" label="Confirmar" severity="success" icon="pi pi-verified" />
                                 <Button
+                                    icon="pi pi-times-circle"
                                     type="button"
                                     label="Cancelar"
                                     severity="danger"
