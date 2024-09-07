@@ -125,7 +125,7 @@ export default function Product() {
             valorVenda: ''
         });
         setEditingProductId(null);
-        navigate('/produtos');
+        navigate('/');
     }
 
     return (
