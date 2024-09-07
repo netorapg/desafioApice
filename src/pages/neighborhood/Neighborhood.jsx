@@ -13,23 +13,23 @@ export default function Bairro() {
         bairro: '',
     });
 
-    const [neighborhoods, setNeighborhoods] = useState([]); // Estado para armazenar os bairros
+    const [bairros, setBairros] = useState([]); // Estado para armazenar os bairros
+    const [editingId, setEditingId] = useState(null); // Estado para armazenar o ID do bairro em edição
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        // Fetch neighborhoods from the backend
-        const fetchNeighborhoods = async () => {
-            try {
-                const response = await fetch('http://localhost:3001/api/bairros');
-                const data = await response.json();
-                setNeighborhoods(data);
-            } catch (error) {
-                console.error('Error fetching neighborhoods:', error);
-            }
-        };
+    const fetchBairros = async () => {
+        try {
+            const response = await fetch('http://localhost:3001/api/bairros');
+            const data = await response.json();
+            setBairros(data);
+        } catch (error) {
+            console.error('Erro ao buscar bairros:', error);
+        }
+    };
 
-        fetchNeighborhoods();
+    useEffect(() => {
+        fetchBairros();
     }, []);
 
     const handleChange = (e) => {
@@ -39,17 +39,14 @@ export default function Bairro() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Dados enviados:', formData); // Log dos dados enviados
-    
-        // Verifique se todos os campos necessários estão preenchidos
-        if (!formData.codigo || !formData.bairro) {
-            alert('Por favor, preencha todos os campos.');
-            return;
-        }
-    
+        const method = editingId ? 'PUT' : 'POST';
+        const url = editingId 
+            ? `http://localhost:3001/api/bairros/${editingId}` 
+            : 'http://localhost:3001/api/bairros';
+
         try {
-            const response = await fetch('http://localhost:3001/api/bairros', {
-                method: 'POST',
+            const response = await fetch(url, {
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -58,66 +55,54 @@ export default function Bairro() {
                     nome: formData.bairro,
                 }),
             });
-    
+
             if (response.ok) {
-                alert('Bairro adicionado com sucesso!');
-                setFormData({
-                    codigo: '',
-                    bairro: '',
-                });
-                // Atualiza a lista de bairros após adicionar um novo bairro
-                const data = await response.json();
-                setNeighborhoods(prevNeighborhoods => [...prevNeighborhoods, data]);
+                alert(editingId ? 'Bairro atualizado com sucesso!' : 'Bairro adicionado com sucesso!');
+                setFormData({ codigo: '', bairro: '' });
+                setEditingId(null);
+                fetchBairros(); // Atualiza a lista após adição ou edição
             } else {
-                const text = await response.text();
-                try {
-                    const errorData = JSON.parse(text);
-                    console.error('Erro na resposta:', errorData); // Log do erro na resposta
-                } catch (e) {
-                    console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
-                }
-                throw new Error('Erro ao adicionar bairro');
+                alert('Erro ao processar a solicitação.');
             }
         } catch (error) {
-            console.error('Error adding neighborhood:', error);
-            alert('Erro ao adicionar bairro');
+            console.error('Erro ao processar a solicitação:', error);
+            alert('Erro ao processar a solicitação');
+        }
+    };
+
+    const handleEdit = (bairro) => {
+        setFormData({
+            codigo: bairro.id,
+            bairro: bairro.nome,
+        });
+        setEditingId(bairro.id);
+    };
+
+    const handleDelete = async (bairroId) => {
+        if (window.confirm('Tem certeza que deseja deletar este bairro?')) {
+            try {
+                const response = await fetch(`http://localhost:3001/api/bairros/${bairroId}`, {
+                    method: 'DELETE',
+                });
+
+                if (response.ok) {
+                    alert('Bairro deletado com sucesso!');
+                    setBairros(prevBairros => prevBairros.filter(bairro => bairro.id !== bairroId));
+                } else {
+                    alert('Erro ao deletar bairro');
+                }
+            } catch (error) {
+                console.error('Erro ao deletar bairro:', error);
+                alert('Erro ao deletar bairro');
+            }
         }
     };
 
     const handleCancel = () => {
-        setFormData({
-            codigo: '',
-            bairro: '',
-        });
+        setFormData({ codigo: '', bairro: '' });
+        setEditingId(null);
         navigate('/');
     };
-
-    const handleDelete = async (neighborhoodId) => {
-        if (window.confirm('Tem certeza que deseja deletar este bairro?')) {
-            try {
-                const response = await fetch(`http://localhost:3001/api/bairros/${neighborhoodId}`, {
-                    method: 'DELETE',
-                });
-    
-                if (response.ok) {
-                    alert('Bairro deletado com sucesso!');
-                    setNeighborhoods(prevNeighborhoods => prevNeighborhoods.filter(neighborhood => neighborhood.id !== neighborhoodId));
-                } else {
-                    const text = await response.text();
-                    try {
-                        const errorData = JSON.parse(text);
-                        console.error('Erro na resposta:', errorData); // Log do erro na resposta
-                    } catch (e) {
-                        console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
-                    }
-                    throw new Error('Erro ao deletar bairro');
-                }
-            } catch (error) {
-                console.error('Error deleting neighborhood:', error);
-                alert('Erro ao deletar bairro');
-            }
-        }
-    }
 
     return (
         <Card>
@@ -126,22 +111,29 @@ export default function Bairro() {
                 <TabView>
                     <TabPanel header="Lista">
                         <div className="grid">
-                            {neighborhoods.map(neighborhood => (
-                                <div key={neighborhood.id} className="col-12 md:col-6 lg:col-4">
-                                    <Card title={neighborhood.nome} >
-                                        <p><strong>Código:</strong> {neighborhood.id}</p>
+                            {bairros.map(bairro => (
+                                <div key={bairro.id} className="col-12 md:col-6 lg:col-4">
+                                    <Card title={bairro.nome}>
+                                        <p><strong>Código:</strong> {bairro.id}</p>
+                                        <Button
+                                            label="Editar"
+                                            icon="pi pi-pencil"
+                                            className="p-button-warning"
+                                            onClick={() => handleEdit(bairro)}
+                                        />
                                         <Button
                                             label="Deletar"
                                             icon="pi pi-trash"
                                             className="p-button-danger"
-                                            onClick={() => handleDelete(neighborhood.id)}
+                                            onClick={() => handleDelete(bairro.id)}
+                                            style={{ marginLeft: '10px' }}
                                         />
                                     </Card>
                                 </div>
                             ))}
                         </div>
                     </TabPanel>
-                    <TabPanel header="Incluir" leftIcon="pi pi-map-marker mr-2">
+                    <TabPanel header={editingId ? "Editar" : "Incluir"} leftIcon="pi pi-map-marker mr-2">
                         <form onSubmit={handleSubmit}>
                             <div className="formgrid grid mb-4">
                                 <div className="col-12 md:col-6 lg:col-2">
@@ -152,6 +144,7 @@ export default function Bairro() {
                                             value={formData.codigo}
                                             onChange={handleChange}
                                             style={{ width: '100%' }}
+                                            disabled={editingId !== null}
                                         />
                                         <label htmlFor="codigo">Código</label>
                                     </FloatLabel>
@@ -170,7 +163,7 @@ export default function Bairro() {
                                 </div>
                             </div>
                             <div className="card flex flex-wrap justify-content-left gap-3">
-                                <Button type="submit" label="Confirmar" severity="success" />
+                                <Button type="submit" label={editingId ? 'Atualizar' : 'Confirmar'} severity="success" />
                                 <Button
                                     type="button"
                                     label="Cancelar"
