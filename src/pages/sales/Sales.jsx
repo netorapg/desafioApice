@@ -167,7 +167,6 @@ const handleSubmit = async (e) => {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        id: formData.codigo,
                         venda_id: vendaId,
                         produto_id: item.produto.id,
                         qtde: item.quantidade,
