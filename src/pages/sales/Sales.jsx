@@ -237,9 +237,30 @@ const handleSubmit = async (e) => {
     const handleDelete = async (id) => {
         if (window.confirm('Deseja realmente excluir esta venda?')) {
             try {
-                const itemResponse = await fetch(`http://localhost:3001/api/venda_itens/${id}`, {
-                    method: 'DELETE',
+                // Buscar itens da venda
+                const itemsResponse = await fetch(`http://localhost:3001/api/venda_itens?venda_id=${id}`);
+                if (!itemsResponse.ok) {
+                    console.error('Erro ao buscar itens da venda.');
+                    return;
+                }
+                const items = await itemsResponse.json();
+    
+                // Excluir itens da venda
+                const deleteItemPromises = items.map(item => {
+                    return fetch(`http://localhost:3001/api/venda_itens/${item.id}`, {
+                        method: 'DELETE',
+                    });
                 });
+    
+                const itemResponses = await Promise.all(deleteItemPromises);
+                const allItemsDeleted = itemResponses.every(response => response.ok);
+    
+                if (!allItemsDeleted) {
+                    console.error('Erro ao excluir alguns itens da venda.');
+                    return;
+                }
+    
+                // Excluir a venda
                 const response = await fetch(`http://localhost:3001/api/vendas/${id}`, {
                     method: 'DELETE',
                 });
