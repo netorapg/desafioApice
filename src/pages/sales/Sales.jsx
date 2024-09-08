@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import 'primeflex/primeflex.css';
 
 export default function Sales() {
+    // State variables
     const [date, setDate] = useState(null);
     const [selectedPerson, setSelectedPerson] = useState(null);
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -20,17 +21,10 @@ export default function Sales() {
     const [products, setProducts] = useState([]);
     const [editingID, setEditingID] = useState(null);
     const [sales, setSales] = useState([]);
-
-    const [formData, setFormData] = useState({
-        codigo: '',
-        dataVenda: '',
-        pessoa: '',
-        itens: [],
-    });
-
+    const [formData, setFormData] = useState({ codigo: '', dataVenda: '', pessoa: '', itens: [] });
     const navigate = useNavigate();
 
-    // Função para buscar vendas
+    // Fetch sales data
     const fetchSales = async () => {
         try {
             const response = await fetch('http://localhost:3001/api/vendas');
@@ -55,9 +49,7 @@ export default function Sales() {
         }
     };
 
-
-
-    // Função para buscar pessoas
+    // Fetch people
     useEffect(() => {
         const fetchPeople = async () => {
             try {
@@ -71,7 +63,7 @@ export default function Sales() {
         fetchPeople();
     }, []);
 
-    // Função para buscar produtos
+    // Fetch products
     useEffect(() => {
         const fetchProducts = async () => {
             try {
@@ -91,12 +83,12 @@ export default function Sales() {
         fetchProducts();
     }, []);
 
-    // Carregar vendas ao montar o componente
+    // Fetch sales on component mount
     useEffect(() => {
         fetchSales();
     }, []);
 
-    // Adicionar um item à venda
+    // Add an item to the sale
     const addItem = () => {
         if (!selectedProduct || !quantity || !unitPrice) {
             alert('Por favor, preencha todos os campos.');
@@ -112,36 +104,42 @@ export default function Sales() {
             valorItem: quantityValue * unitPriceValue,
         };
 
-        setItems([...items, newItem]);
+        if (editingID !== null) {
+            setItems(items.map((item) => item.produto.id === selectedProduct.id ? newItem : item));
+            setEditingID(null);
+        } else {
+            setItems([...items, newItem]);
+        }
+
         setSelectedProduct(null);
         setQuantity('');
         setUnitPrice('');
     };
 
-    // Calcula o total da venda
+    // Calculate the total of the sale
     const getTotal = () => items.reduce((total, item) => total + item.valorItem, 0).toFixed(2);
 
-    // Atualiza dados do formulário
-    // Atualiza dados do formulário
+    // Handle form input changes
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prevState => ({ ...prevState, [name]: value }));
     };
 
+    // Edit an item in the list
     const handleEditItem = (index) => {
         const itemToEdit = items[index];
         setSelectedProduct(itemToEdit.produto);
         setQuantity(itemToEdit.quantidade);
         setUnitPrice(itemToEdit.valorUnitario);
-        setItems(items.filter((_, i) => i !== index));
+        setEditingID(index); // Store index instead of ID for list editing
     }
 
+    // Delete an item from the list
     const handleDeleteItem = (index) => {
         setItems(items.filter((_, i) => i !== index));
     }
 
-
-    // Envia dados do formulário
+    // Submit the form
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -151,7 +149,7 @@ export default function Sales() {
         }
 
         const method = editingID ? 'PUT' : 'POST';
-        const url = editingID ? `http://localhost:3001/api/vendas/${editingID}` : 'http://localhost:3001/api/vendas';
+        const url = editingID ? `http://localhost:3001/api/vendas/${formData.codigo}` : 'http://localhost:3001/api/vendas';
 
         const formattedDate = date ? date.toISOString().split('T')[0] : null;
 
@@ -172,7 +170,7 @@ export default function Sales() {
                 const venda = await response.json();
                 const vendaId = venda.id;
 
-                // Salvar itens da venda
+                // Save sale items
                 const itemResponses = await Promise.all(items.map(item => {
                     return fetch('http://localhost:3001/api/venda_itens', {
                         method: 'POST',
@@ -212,10 +210,7 @@ export default function Sales() {
         }
     };
 
-
-
-
-    // Cancela a operação e navega para outra página
+    // Cancel operation and navigate
     const handleCancel = () => {
         setFormData({
             codigo: '',
@@ -227,28 +222,39 @@ export default function Sales() {
         navigate('/');
     };
 
-    // Edita uma venda existente
-    const handleEdit = (id) => {
-        const saleToEdit = sales.find(sale => sale.id === id);
+    // Edit an existing sale
+    const handleEdit = async (sale) => {
+        const saleToEdit = sales.find(s => s.id === sale.id);
+
         if (saleToEdit) {
             setFormData({
                 codigo: saleToEdit.id,
-                dataVenda: saleToEdit.dt_venda,
+                dataVenda: new Date(saleToEdit.dt_venda),
                 pessoa: saleToEdit.pessoa_id,
-                itens: saleToEdit.itens.map(item => ({
-                    ...item,
-                    valorUnitario: Number(item.valorUnitario).toFixed(2) // Garantir que valorUnitario é um número
-                })),
             });
-            setEditingID(id);
+            setSelectedPerson(people.find(p => p.id === saleToEdit.pessoa_id));
+            setDate(new Date(saleToEdit.dt_venda));
+    
+            // Load sale items
+            const response = await fetch(`http://localhost:3001/api/venda_itens?venda_id=${saleToEdit.id}`);
+            const itemsData = await response.json();
+            const items = itemsData.map(item => ({
+                produto: products.find(p => p.id === item.produto_id),
+                quantidade: item.qtde,
+                valorUnitario: item.vr_venda,
+                valorItem: item.qtde * item.vr_venda,
+            }));
+            setItems(items);
+    
+            setEditingID(saleToEdit.id);
         }
     };
-
-    // Deleta uma venda
+    
+    // Delete a sale
     const handleDelete = async (id) => {
         if (window.confirm('Deseja realmente excluir esta venda?')) {
             try {
-                // Buscar itens da venda
+                // Fetch sale items
                 const itemsResponse = await fetch(`http://localhost:3001/api/venda_itens?venda_id=${id}`);
                 if (!itemsResponse.ok) {
                     console.error('Erro ao buscar itens da venda.');
@@ -256,7 +262,7 @@ export default function Sales() {
                 }
                 const items = await itemsResponse.json();
 
-                // Excluir itens da venda
+                // Delete sale items
                 const deleteItemPromises = items.map(item => {
                     return fetch(`http://localhost:3001/api/venda_itens/${item.id}`, {
                         method: 'DELETE',
@@ -271,14 +277,14 @@ export default function Sales() {
                     return;
                 }
 
-                // Excluir a venda
+                // Delete sale
                 const response = await fetch(`http://localhost:3001/api/vendas/${id}`, {
                     method: 'DELETE',
                 });
 
                 if (response.ok) {
                     alert('Venda excluída com sucesso!');
-                    fetchSales(); // Atualizar a lista de vendas
+                    fetchSales(); // Update sales list
                 } else {
                     console.error('Erro ao excluir venda.');
                 }
@@ -290,7 +296,7 @@ export default function Sales() {
 
     return (
         <Card>
-            <h1>Venda</h1>
+            <h1>{editingID ? 'Editar Venda' : 'Venda'}</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
@@ -316,11 +322,12 @@ export default function Sales() {
                             ))}
                         </div>
                     </TabPanel>
-                    <TabPanel header="Incluir" leftIcon="pi pi-shopping-bag mr-2">
+                    <TabPanel header={editingID ? "Editar" : "Incluir"} leftIcon="pi pi-shopping-bag mr-2">
                         <div className="formgrid grid mb-4">
                             <div className="col-12 md:col-6 lg:col-2">
                                 <FloatLabel>
-                                    <InputText name="codigo" id="codigo" value={formData.codigo} onChange={handleChange} style={{ width: '100%' }} />
+                                    <InputText name="codigo" id="codigo" value={formData.codigo} onChange={handleChange} style={{ width: '100%' }} 
+                                    disabled={editingID !== null}/>
                                     <label htmlFor="codigo">Código</label>
                                 </FloatLabel>
                             </div>
@@ -381,24 +388,26 @@ export default function Sales() {
                                         <tr key={index}>
                                             <td>{item.produto.nome}</td>
                                             <td>{item.quantidade}</td>
-                                            <td>{item.valorUnitario.toFixed(2)}</td>
+                                            <td>{item.valorUnitario}</td>
                                             <td>{item.valorItem.toFixed(2)}</td>
 
-                                            <Button
-                                                icon="pi pi-pencil"
-                                                className="p-button-rounded p-button-secondary"
-                                                onClick={() => handleEditItem(index)}
-                                            />
-                                            <Button
-                                                icon="pi pi-trash"
-                                                className="p-button-rounded p-button-danger"
-                                                onClick={() => handleDeleteItem(index)} 
-                                            />
+                                            <td>
+                                                <Button
+                                                    icon="pi pi-pencil"
+                                                    className="p-button-rounded p-button-secondary"
+                                                    onClick={() => handleEditItem(index)}
+                                                />
+                                            </td>
+                                            <td>
+                                                <Button
+                                                    icon="pi pi-trash"
+                                                    className="p-button-rounded p-button-danger"
+                                                    onClick={() => handleDeleteItem(index)} 
+                                                />
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
-
-
                             </table>
                             <div className="flex justify-content-end mt-4">
                                 <h3>Total: {getTotal()}</h3>
