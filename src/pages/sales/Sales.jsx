@@ -34,10 +34,14 @@ export default function Sales() {
     const fetchSales = async () => {
         try {
             const response = await fetch('http://localhost:3001/api/vendas');
-            const text = await response.text(); // Leia a resposta como texto
+            const text = await response.text();
             console.log('Resposta recebida:', text);
-            const data = JSON.parse(text); // Tente fazer o parsing manualmente
-            // Buscar itens para cada venda
+            const data = JSON.parse(text);
+            
+            if (!Array.isArray(data)) {
+                throw new Error('Resposta da API não é um array');
+            }
+            
             const salesWithItems = await Promise.all(data.map(async sale => {
                 const itemsResponse = await fetch(`http://localhost:3001/api/venda_itens/${sale.id}`);
                 const itemsText = await itemsResponse.text();
@@ -50,6 +54,7 @@ export default function Sales() {
             console.error('Erro ao buscar vendas:', error);
         }
     };
+    
     
 
     // Função para buscar pessoas
@@ -72,11 +77,17 @@ export default function Sales() {
             try {
                 const response = await fetch('http://localhost:3001/api/produtos');
                 const data = await response.json();
+                
+                if (!Array.isArray(data)) {
+                    throw new Error('Resposta da API de produtos não é um array');
+                }
+                
                 setProducts(data);
             } catch (error) {
                 console.error('Erro ao buscar produtos:', error);
             }
         };
+        
         fetchProducts();
     }, []);
 
@@ -129,7 +140,6 @@ const handleSubmit = async (e) => {
     const method = editingID ? 'PUT' : 'POST';
     const url = editingID ? `http://localhost:3001/api/vendas/${editingID}` : 'http://localhost:3001/api/vendas';
     
-    // Converter a data para o formato YYYY-MM-DD
     const formattedDate = date ? date.toISOString().split('T')[0] : null;
     
     try {
@@ -140,9 +150,11 @@ const handleSubmit = async (e) => {
             },
             body: JSON.stringify({
                 id: formData.codigo,
-                dt_venda: formattedDate, // Corrigido para usar formattedDate
+                dt_venda: formattedDate,
                 pessoa_id: selectedPerson ? selectedPerson.id : null,
                 itens: items.map(item => ({
+                    id: formData.codigo,
+                    venda_id: formData.codigo, // Use a mesma ID da venda
                     produto_id: item.produto.id,
                     qtde: item.quantidade,
                     vr_venda: item.valorUnitario,
@@ -158,9 +170,9 @@ const handleSubmit = async (e) => {
                 pessoa: '',
                 itens: [],
             });
-            setDate(null); // Limpar a data após a submissão
+            setDate(null);
             setEditingID(null);
-            fetchSales(); // Atualizar a lista de vendas
+            fetchSales();
         } else {
             console.error('Erro ao salvar venda.');
         }
@@ -168,6 +180,8 @@ const handleSubmit = async (e) => {
         console.error('Erro ao salvar venda:', error);
     }
 };
+
+
 
 
     // Cancela a operação e navega para outra página
@@ -200,7 +214,7 @@ const handleSubmit = async (e) => {
         })));
         setEditingID(sale.id);
     };
-
+    
     // Deleta uma venda
     const handleDelete = async (id) => {
         if (window.confirm('Deseja realmente excluir esta venda?')) {
