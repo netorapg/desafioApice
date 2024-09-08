@@ -465,16 +465,16 @@ app.get('/api/venda_itens/:id', (req, res) => {
 
 
 app.post('/api/venda_itens', (req, res) => {
-    const {id,  venda_id, produto_id, qtde, vr_venda } = req.body;
-    console.log('Dados recebidos para inserção de item de venda:', {id, venda_id, produto_id, qtde, vr_venda });
+    const {venda_id, produto_id, qtde, vr_venda } = req.body;
+    console.log('Dados recebidos para inserção de item de venda:', {venda_id, produto_id, qtde, vr_venda });
 
-    if (!id || !venda_id || !produto_id || !qtde || !vr_venda) {
+    if (!venda_id || !produto_id || !qtde || !vr_venda) {
         console.log('Erro: Dados insuficientes para inserção');
         return res.status(400).send('Dados insuficientes para inserção');
     }
 
-    const sql = 'INSERT INTO venda_itens (id, venda_id, produto_id, qtde, vr_venda) VALUES (?, ?, ?, ?, ?)';
-    db.query(sql, [id, venda_id, produto_id, qtde, vr_venda], (err, results) => {
+    const sql = 'INSERT INTO venda_itens (venda_id, produto_id, qtde, vr_venda) VALUES (?, ?, ?, ?)';
+    db.query(sql, [ venda_id, produto_id, qtde, vr_venda], (err, results) => {
         if (err) {
             console.error('Erro ao adicionar item de venda:', err);
             return res.status(500).send(err);
