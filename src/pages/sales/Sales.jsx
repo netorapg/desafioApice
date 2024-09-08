@@ -152,27 +152,46 @@ const handleSubmit = async (e) => {
                 id: formData.codigo,
                 dt_venda: formattedDate,
                 pessoa_id: selectedPerson ? selectedPerson.id : null,
-                itens: items.map(item => ({
-                    id: formData.codigo,
-                    venda_id: formData.codigo, // Use a mesma ID da venda
-                    produto_id: item.produto.id,
-                    qtde: item.quantidade,
-                    vr_venda: item.valorUnitario,
-                })),
             }),
         });
-    
+
         if (response.ok) {
-            alert(editingID ? 'Venda atualizada com sucesso!' : 'Venda cadastrada com sucesso!');
-            setFormData({
-                codigo: '',
-                dataVenda: '',
-                pessoa: '',
-                itens: [],
-            });
-            setDate(null);
-            setEditingID(null);
-            fetchSales();
+            const venda = await response.json();
+            const vendaId = venda.id;
+
+            // Salvar itens da venda
+            const itemResponses = await Promise.all(items.map(item => {
+                return fetch('http://localhost:3001/api/venda_itens', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        id: formData.codigo,
+                        venda_id: vendaId,
+                        produto_id: item.produto.id,
+                        qtde: item.quantidade,
+                        vr_venda: item.valorUnitario,
+                    }),
+                });
+            }));
+
+            const allItemsSaved = itemResponses.every(res => res.ok);
+
+            if (allItemsSaved) {
+                alert(editingID ? 'Venda atualizada com sucesso!' : 'Venda cadastrada com sucesso!');
+                setFormData({
+                    codigo: '',
+                    dataVenda: '',
+                    pessoa: '',
+                    itens: [],
+                });
+                setDate(null);
+                setEditingID(null);
+                fetchSales();
+            } else {
+                console.error('Erro ao salvar itens da venda.');
+            }
         } else {
             console.error('Erro ao salvar venda.');
         }
@@ -219,6 +238,9 @@ const handleSubmit = async (e) => {
     const handleDelete = async (id) => {
         if (window.confirm('Deseja realmente excluir esta venda?')) {
             try {
+                const itemResponse = await fetch(`http://localhost:3001/api/venda_itens/${id}`, {
+                    method: 'DELETE',
+                });
                 const response = await fetch(`http://localhost:3001/api/vendas/${id}`, {
                     method: 'DELETE',
                 });
