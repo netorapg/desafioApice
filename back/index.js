@@ -414,9 +414,9 @@ app.delete('/api/vendas/:id', (req, res) => {
 
 app.put('/api/vendas/:id', (req, res) => {
     const { id } = req.params;
-    const { pessoa_id, data } = req.body;
+    const { pessoa_id, dt_venda } = req.body;
 
-    if (!id || !pessoa_id || !dt_venda) {
+    if (!pessoa_id || !dt_venda) {
         return res.status(400).send('Dados insuficientes para atualização');
     }
 
@@ -504,14 +504,14 @@ app.delete('/api/venda_itens/:id', (req, res) => {
 
 app.put('/api/venda_itens/:id', (req, res) => {
     const { id } = req.params;
-    const { venda_id, produto_id, quantidade, preco } = req.body;
+    const { venda_id, produto_id, qtde, vr_venda } = req.body;
 
-    if (!venda_id || !produto_id || !quantidade || !preco) {
+    if (!venda_id || !produto_id || !qtde || !vr_venda) {
         return res.status(400).send('Dados insuficientes para atualização');
     }
 
-    const sql = 'UPDATE venda_itens SET venda_id = ?, produto_id = ?, quantidade = ?, preco = ? WHERE id = ?';
-    db.query(sql, [venda_id, produto_id, quantidade, preco, id], (err, results) => {
+    const sql = 'UPDATE venda_itens SET venda_id = ?, produto_id = ?, qtde = ?, vr_venda = ? WHERE id = ?';
+    db.query(sql, [venda_id, produto_id, qtde, vr_venda, id], (err, results) => {
         if (err) {
             console.error('Erro ao atualizar item de venda:', err);
             return res.status(500).send(`Erro ao atualizar item de venda: ${err.message}`);
