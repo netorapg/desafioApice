@@ -537,6 +537,52 @@ app.put('/api/venda_itens/:id', (req, res) => {
     });
 });
 
+app.get('/api/pessoas', async (req, res) => {
+    const { nome, cidade, bairro } = req.query;
+
+    // Inicia a consulta SQL
+    let query = `
+        SELECT p.id, p.nome, p.telefone, c.nome as cidade 
+        FROM pessoa p 
+        JOIN cidade c ON p.cidade_id = c.id
+        WHERE 1=1
+    `;
+    
+    // Array para armazenar parâmetros da consulta
+    const params = [];
+    
+    // Adiciona filtro para o nome se fornecido
+    if (nome) {
+        query += ` AND p.nome LIKE ?`;
+        params.push(`%${nome}%`);
+    }
+
+    // Adiciona filtro para a cidade se fornecido
+    if (cidade) {
+        query += ` AND c.nome LIKE ?`;
+        params.push(`%${cidade}%`);
+    }
+
+    // Adiciona filtro para o bairro se fornecido
+    if (bairro) {
+        query += ` AND p.bairro_id = ?`;
+        params.push(bairro);
+    }
+
+    console.log('Consulta SQL:', query); // Log da consulta SQL
+    console.log('Parâmetros:', params); // Log dos parâmetros
+
+    try {
+        // Executa a consulta
+        const [pessoas] = await db.query(query, params);
+        console.log('Resposta do banco de dados:', pessoas); // Log da resposta do banco de dados
+        res.json(pessoas);
+    } catch (error) {
+        console.error('Erro ao buscar pessoas', error);
+        res.status(500).json({ error: 'Erro ao buscar pessoas' });
+    }
+});
+
 
 
 // Iniciar o servidor

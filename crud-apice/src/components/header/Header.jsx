@@ -1,9 +1,7 @@
 
 import React from 'react';
 import { Menubar } from 'primereact/menubar';
-import { InputText } from 'primereact/inputtext';
 import { Badge } from 'primereact/badge';
-import { Avatar } from 'primereact/avatar';
 import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
@@ -74,7 +72,8 @@ export default function Header() {
                 {
                     label: 'Lista de Pessoas',
                     icon: 'pi pi-user',
-                    template: itemRenderer
+                    template: itemRenderer,
+                    command: () => navigate('/listPeople')
                 },
                 {
                     separator: true
