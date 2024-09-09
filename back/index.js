@@ -216,23 +216,6 @@ app.post('/api/pessoas', (req, res) => {
     });
 });
 
-app.delete('/api/pessoas/:id', (req, res) => {
-    const { id } = req.params;
-
-    const sql = 'DELETE FROM pessoa WHERE id = ?';
-    db.query(sql, [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao deletar pessoa:', err);
-            return res.status(500).send(`Erro ao deletar pessoa: ${err.message}`);
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).send('Pessoa não encontrada');
-        }
-
-        res.status(200).send('Pessoa deletada com sucesso');
-    });
-});
 
 app.put('/api/pessoas/:id', (req, res) => {
     const { id } = req.params;
@@ -256,6 +239,35 @@ app.put('/api/pessoas/:id', (req, res) => {
         res.status(200).send('Pessoa atualizada com sucesso');
     });
 });
+
+app.delete('/api/pessoas/:id', (req, res) => {
+    const { id } = req.params;
+
+    // Primeiro, limpe os valores de cidade_id e bairro_id
+    const updateSql = 'UPDATE pessoa SET cidade_id = NULL, bairro_id = NULL WHERE id = ?';
+    db.query(updateSql, [id], (err, results) => {
+        if (err) {
+            console.error('Erro ao limpar as chaves estrangeiras:', err);
+            return res.status(500).send(`Erro ao limpar as chaves estrangeiras: ${err.message}`);
+        }
+
+        // Em seguida, delete o registro na tabela `pessoa`
+        const deletePessoaSql = 'DELETE FROM pessoa WHERE id = ?';
+        db.query(deletePessoaSql, [id], (err, results) => {
+            if (err) {
+                console.error('Erro ao deletar pessoa:', err);
+                return res.status(500).send(`Erro ao deletar pessoa: ${err.message}`);
+            }
+
+            if (results.affectedRows === 0) {
+                return res.status(404).send('Pessoa não encontrada');
+            }
+
+            res.status(200).send('Pessoa deletada com sucesso');
+        });
+    });
+});
+
 
 app.get('/api/produtos', (req, res) => {
     db.query('SELECT * FROM produto', (err, results) => {
