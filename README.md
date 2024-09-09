@@ -1,6 +1,6 @@
 ## Comando de execução do projeto
-- Na pasta back, escrever o comando ### `node index.js`
-- Na pasta crud-apice, escrever o comando ### `npm start`
+- Na pasta back, escrever o comando `node index.js`
+- Na pasta crud-apice, escrever o comando `npm start`
 
 # Situação Atual do Projeto
 
