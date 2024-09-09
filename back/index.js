@@ -537,6 +537,93 @@ app.put('/api/venda_itens/:id', (req, res) => {
     });
 });
 
+app.get('/api/pessoas', async (req, res) => {
+    const { nome, cidade, bairro } = req.query;
+
+    // Inicia a consulta SQL
+    let query = `
+        SELECT p.id, p.nome, p.telefone, c.nome as cidade 
+        FROM pessoa p 
+        JOIN cidade c ON p.cidade_id = c.id
+        WHERE 1=1
+    `;
+    
+    // Array para armazenar parâmetros da consulta
+    const params = [];
+    
+    // Adiciona filtro para o nome se fornecido
+    if (nome) {
+        query += ` AND p.nome LIKE ?`;
+        params.push(`%${nome}%`);
+    }
+
+    // Adiciona filtro para a cidade se fornecido
+    if (cidade) {
+        query += ` AND c.nome LIKE ?`;
+        params.push(`%${cidade}%`);
+    }
+
+    // Adiciona filtro para o bairro se fornecido
+    if (bairro) {
+        query += ` AND p.bairro LIKE ?`;
+        params.push(`%${bairro}%`);
+    }
+
+    console.log('Consulta SQL:', query); // Log da consulta SQL
+    console.log('Parâmetros:', params); // Log dos parâmetros
+
+    try {
+        // Executa a consulta
+        const [pessoas] = await db.query(query, params);
+        console.log('Resposta do banco de dados:', pessoas); // Log da resposta do banco de dados
+        res.json(pessoas);
+    } catch (error) {
+        console.error('Erro ao buscar pessoas', error);
+        res.status(500).json({ error: 'Erro ao buscar pessoas' });
+    }
+});
+
+app.get('/api/vendas', async (req, res) => {
+    const { dataInicio, dataFim, pessoa, produto } = req.query;
+
+    let query = `
+        SELECT v.id, v.dt_venda AS data, p.nome AS pessoa, pr.nome AS produto, vi.qtde AS quantidade, vi.vr_item AS valor_total
+        FROM venda v
+        JOIN venda_itens vi ON v.id = vi.venda_id
+        JOIN pessoa p ON v.pessoa_id = p.id
+        JOIN produto pr ON vi.produto_id = pr.id
+        WHERE 1=1
+    `;
+    const params = [];
+
+    if (dataInicio) {
+        query += ` AND v.dt_venda >= ?`;
+        params.push(new Date(dataInicio).toISOString().slice(0, 19).replace('T', ' '));
+    }
+
+    if (dataFim) {
+        query += ` AND v.dt_venda <= ?`;
+        params.push(new Date(dataFim).toISOString().slice(0, 19).replace('T', ' '));
+    }
+
+    if (pessoa) {
+        query += ` AND p.nome LIKE ?`;
+        params.push(`%${pessoa}%`);
+    }
+
+    if (produto) {
+        query += ` AND pr.nome LIKE ?`;
+        params.push(`%${produto}%`);
+    }
+
+    try {
+        const vendas = await db.query(query, params);
+        res.json(vendas);
+    } catch (error) {
+        console.error('Erro ao buscar vendas', error);
+        res.status(500).json({ error: 'Erro ao buscar vendas' });
+    }
+});
 
 
 // Iniciar o servidor
