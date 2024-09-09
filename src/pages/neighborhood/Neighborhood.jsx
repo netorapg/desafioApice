@@ -106,7 +106,7 @@ export default function Bairro() {
 
     return (
         <Card>
-            <h1>Cadastro de Bairro</h1>
+            <h1>{editingId ? "Editar Bairro" : "Bairro"}</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">

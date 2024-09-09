@@ -141,6 +141,7 @@ export default function Pessoa() {
     };
 
     const handleEdit = (person) => {
+        console.log('Editando pessoa:', person);
         setFormData({
             codigo: person.id,
             nome: person.nome,
@@ -154,6 +155,7 @@ export default function Pessoa() {
             bairro_id: person.bairro_id
         });
         setEditingId(person.id);
+        setTimeout(() => console.log("FormData atualizado:", formData), 1000);
     };
 
     const handleDelete = async (personId) => {
@@ -202,7 +204,7 @@ export default function Pessoa() {
 
     return (
         <Card>
-            <h1>Cadastro de Pessoa</h1>
+            <h1>{editingId ? "Editar Pessoa" : "Pessoa" }</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
@@ -227,7 +229,7 @@ export default function Pessoa() {
                             ))}
                         </div>
                     </TabPanel>
-                    <TabPanel header="Incluir" leftIcon="pi pi-user-plus mr-2">
+                    <TabPanel header={editingId ? "Editar" : "Incluir"} leftIcon="pi pi-user-plus mr-2">
                         <form onSubmit={handleSubmit}>
                             <div className="formgrid grid mb-4">
                                 <div className="col-12 md:col-6 lg:col-2 mb-3">
@@ -238,6 +240,7 @@ export default function Pessoa() {
                                             value={formData.codigo}
                                             onChange={handleChange}
                                             style={{ width: '100%' }}
+                                            disabled={editingId !== null}
                                         />
                                         <label htmlFor="codigo">Código</label>
                                     </FloatLabel>
@@ -253,6 +256,7 @@ export default function Pessoa() {
                                         />
                                         <label htmlFor="nome">Nome</label>
                                     </FloatLabel>
+                                    {console.log('Nome:', formData.nome)}
                                 </div>
                                 <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
@@ -265,6 +269,7 @@ export default function Pessoa() {
                                         />
                                         <label htmlFor="cep">CEP</label>
                                     </FloatLabel>
+                                    {console.log('Valor do CEP:', formData.cep)}
                                 </div>
                                 <div className="col-12 md:col-6 lg:col-6 mb-3">
                                     <FloatLabel>
