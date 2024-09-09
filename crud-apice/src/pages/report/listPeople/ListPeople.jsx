@@ -7,7 +7,6 @@ import { Column } from 'primereact/column';
 const RelatorioPessoas = () => {
   const [pessoas, setPessoas] = useState([]);
   const [cidades, setCidades] = useState([]);
-  const [bairros, setBairros] = useState([]);
   const [filters, setFilters] = useState({
     nome: '',
     cidade: '',
@@ -16,7 +15,6 @@ const RelatorioPessoas = () => {
 
   useEffect(() => {
     fetchCidades();
-    fetchBairros();
     fetchPessoas();
   }, []);
 
@@ -25,7 +23,9 @@ const RelatorioPessoas = () => {
       const queryParams = new URLSearchParams(filters);
       console.log('Parâmetros de consulta:', queryParams.toString()); // Log dos parâmetros de consulta
       const response = await fetch(`http://localhost:3001/api/pessoas?${queryParams}`);
-      const data = await response.json();
+      const text = await response.text(); // Obter a resposta como texto
+      console.log('Resposta da API:', text); // Log da resposta da API
+      const data = JSON.parse(text); // Fazer o parse do JSON
       setPessoas(data);
     } catch (error) {
       console.error('Erro ao buscar pessoas', error);
@@ -39,16 +39,6 @@ const RelatorioPessoas = () => {
       setCidades(data);
     } catch (error) {
       console.error('Erro ao buscar cidades', error);
-    }
-  };
-
-  const fetchBairros = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/bairros');
-      const data = await response.json();
-      setBairros(data);
-    } catch (error) {
-      console.error('Erro ao buscar bairros', error);
     }
   };
 

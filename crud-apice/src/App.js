@@ -7,6 +7,7 @@ import Neighborhood from './pages/neighborhood/Neighborhood';
 import Product from './pages/product/Product';
 import Sales from './pages/sales/Sales';
 import ListPeople from './pages/report/listPeople/ListPeople';
+import ListSales from './pages/report/listSales/ListSales';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path='product' element= {<Product />} />
             <Route path='sales' element= {<Sales />} />
             <Route path='listPeople' element= {<ListPeople />} />
+            <Route path='listSales' element= {<ListSales />} />
         </Routes>
       </BrowserRouter>
     </>

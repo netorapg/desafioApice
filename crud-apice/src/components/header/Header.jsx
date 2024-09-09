@@ -81,7 +81,8 @@ export default function Header() {
                 {
                     label: 'Lista de Vendas',
                     icon: 'pi pi-shopping-bag',
-                    template: itemRenderer
+                    template: itemRenderer,
+                    command: () => navigate('/listSales')
                 }
             ]
         }

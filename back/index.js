@@ -565,8 +565,8 @@ app.get('/api/pessoas', async (req, res) => {
 
     // Adiciona filtro para o bairro se fornecido
     if (bairro) {
-        query += ` AND p.bairro_id = ?`;
-        params.push(bairro);
+        query += ` AND p.bairro LIKE ?`;
+        params.push(`%${bairro}%`);
     }
 
     console.log('Consulta SQL:', query); // Log da consulta SQL
@@ -583,6 +583,47 @@ app.get('/api/pessoas', async (req, res) => {
     }
 });
 
+app.get('/api/vendas', async (req, res) => {
+    const { dataInicio, dataFim, pessoa, produto } = req.query;
+
+    let query = `
+        SELECT v.id, v.dt_venda AS data, p.nome AS pessoa, pr.nome AS produto, vi.qtde AS quantidade, vi.vr_item AS valor_total
+        FROM venda v
+        JOIN venda_itens vi ON v.id = vi.venda_id
+        JOIN pessoa p ON v.pessoa_id = p.id
+        JOIN produto pr ON vi.produto_id = pr.id
+        WHERE 1=1
+    `;
+    const params = [];
+
+    if (dataInicio) {
+        query += ` AND v.dt_venda >= ?`;
+        params.push(new Date(dataInicio).toISOString().slice(0, 19).replace('T', ' '));
+    }
+
+    if (dataFim) {
+        query += ` AND v.dt_venda <= ?`;
+        params.push(new Date(dataFim).toISOString().slice(0, 19).replace('T', ' '));
+    }
+
+    if (pessoa) {
+        query += ` AND p.nome LIKE ?`;
+        params.push(`%${pessoa}%`);
+    }
+
+    if (produto) {
+        query += ` AND pr.nome LIKE ?`;
+        params.push(`%${produto}%`);
+    }
+
+    try {
+        const vendas = await db.query(query, params);
+        res.json(vendas);
+    } catch (error) {
+        console.error('Erro ao buscar vendas', error);
+        res.status(500).json({ error: 'Erro ao buscar vendas' });
+    }
+});
 
 
 // Iniciar o servidor
