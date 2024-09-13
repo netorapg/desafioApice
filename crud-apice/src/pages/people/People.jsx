@@ -29,7 +29,7 @@ export default function Pessoa() {
 
     const navigate = useNavigate();
 
-    // Defina a função fetchPeople fora do useEffect para poder reutilizá-la em várias partes do componente
+    // Função para buscar pessoas
     const fetchPeople = async () => {
         try {
             const response = await fetch('http://localhost:3001/api/pessoas');
@@ -63,9 +63,9 @@ export default function Pessoa() {
     };
 
     useEffect(() => {
-        fetchPeople(); // Chamando a função para buscar os dados das pessoas ao carregar o componente
-        fetchCities(); // Chamando a função para buscar os dados das cidades ao carregar o componente
-        fetchNeighborhoods(); // Chamando a função para buscar os dados dos bairros ao carregar o componente
+        fetchPeople();
+        fetchCities();
+        fetchNeighborhoods();
     }, []);
 
     const handleChange = (e) => {
@@ -75,9 +75,8 @@ export default function Pessoa() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Dados enviados:', formData); // Log dos dados enviados
-    
-        // Verifique se todos os campos necessários estão preenchidos
+
+        // Verifique se todos os campos estão preenchidos
         if (!formData.codigo || !formData.nome || !formData.cep || !formData.endereco || !formData.numero || !formData.telefone || !formData.email || !formData.cidade_id || !formData.bairro_id) {
             alert('Por favor, preencha todos os campos.');
             return;
@@ -87,7 +86,7 @@ export default function Pessoa() {
         const url = editingId 
             ? `http://localhost:3001/api/pessoas/${editingId}` 
             : 'http://localhost:3001/api/pessoas';
-    
+
         try {
             const response = await fetch(url, {
                 method,
@@ -107,7 +106,7 @@ export default function Pessoa() {
                     bairro_id: formData.bairro_id
                 }),
             });
-    
+
             if (response.ok) {
                 alert(editingId ? 'Pessoa atualizada com sucesso!' : 'Pessoa adicionada com sucesso!');
                 setFormData({
@@ -122,16 +121,9 @@ export default function Pessoa() {
                     cidade_id: '',
                     bairro_id: ''
                 });
-                setEditingId(null); // Reseta o estado de edição após salvar
-                fetchPeople(); // Atualiza a lista de pessoas após adicionar ou editar
+                setEditingId(null);
+                fetchPeople();
             } else {
-                const text = await response.text();
-                try {
-                    const errorData = JSON.parse(text);
-                    console.error('Erro na resposta:', errorData); // Log do erro na resposta
-                } catch (e) {
-                    console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
-                }
                 throw new Error('Erro ao adicionar ou atualizar pessoa');
             }
         } catch (error) {
@@ -141,7 +133,6 @@ export default function Pessoa() {
     };
 
     const handleEdit = (person) => {
-        console.log('Editando pessoa:', person);
         setFormData({
             codigo: person.id,
             nome: person.nome,
@@ -155,7 +146,6 @@ export default function Pessoa() {
             bairro_id: person.bairro_id
         });
         setEditingId(person.id);
-        setTimeout(() => console.log("FormData atualizado:", formData), 1000);
     };
 
     const handleDelete = async (personId) => {
@@ -164,18 +154,11 @@ export default function Pessoa() {
                 const response = await fetch(`http://localhost:3001/api/pessoas/${personId}`, {
                     method: 'DELETE',
                 });
-    
+
                 if (response.ok) {
                     alert('Pessoa deletada com sucesso!');
                     setPeople(prevPeople => prevPeople.filter(person => person.id !== personId));
                 } else {
-                    const text = await response.text();
-                    try {
-                        const errorData = JSON.parse(text);
-                        console.error('Erro na resposta:', errorData); // Log do erro na resposta
-                    } catch (e) {
-                        console.error('Resposta não é um JSON válido:', text); // Log da resposta não JSON
-                    }
                     throw new Error('Erro ao deletar pessoa');
                 }
             } catch (error) {
@@ -183,7 +166,7 @@ export default function Pessoa() {
                 alert('Erro ao deletar pessoa');
             }
         }
-    }
+    };
 
     const handleCancel = () => {
         setFormData({
@@ -198,32 +181,24 @@ export default function Pessoa() {
             cidade_id: '',
             bairro_id: ''
         });
-        setEditingId(null); // Cancela a edição
+        setEditingId(null);
         navigate('/');
     };
 
     return (
         <Card>
-            <h1>{editingId ? "Editar Pessoa" : "Pessoa" }</h1>
+            <h1>{editingId ? "Editar Pessoa" : "Pessoa"}</h1>
             <div className="card">
                 <TabView>
                     <TabPanel header="Lista">
                         <div className="grid">
                             {people.map(person => (
                                 <div key={person.id} className="col-12 md:col-6 lg:col-4 mb-3">
-                                    <Card title={person.nome} subTitle={`Cidade ID: ${person.cidade_id}`}>
+                                    <Card title={person.nome} subTitle={`Cidade: ${cities.find(city => city.id === person.cidade_id)?.nome || "N/A"}`}>
                                         <p><strong>Código:</strong> {person.id}</p>
                                         <p><strong>Telefone:</strong> {person.telefone}</p>
-                                        <Button
-                                            icon="pi pi-pencil"
-                                            className="p-button-warning mr-2"
-                                            onClick={() => handleEdit(person)}
-                                        />
-                                        <Button  
-                                            icon="pi pi-trash" 
-                                            className="p-button-danger" 
-                                            onClick={() => handleDelete(person.id)}
-                                        />
+                                        <Button icon="pi pi-pencil" className="p-button-warning mr-2" onClick={() => handleEdit(person)} />
+                                        <Button icon="pi pi-trash" className="p-button-danger" onClick={() => handleDelete(person.id)} />
                                     </Card>
                                 </div>
                             ))}
@@ -256,7 +231,6 @@ export default function Pessoa() {
                                         />
                                         <label htmlFor="nome">Nome</label>
                                     </FloatLabel>
-                                    {console.log('Nome:', formData.nome)}
                                 </div>
                                 <div className="col-12 md:col-6 lg:col-2 mb-3">
                                     <FloatLabel>
@@ -269,7 +243,6 @@ export default function Pessoa() {
                                         />
                                         <label htmlFor="cep">CEP</label>
                                     </FloatLabel>
-                                    {console.log('Valor do CEP:', formData.cep)}
                                 </div>
                                 <div className="col-12 md:col-6 lg:col-6 mb-3">
                                     <FloatLabel>
@@ -295,7 +268,7 @@ export default function Pessoa() {
                                         <label htmlFor="numero">Número</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2 mb-3">
+                                <div className="col-12 md:col-6 lg:col-3 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="complemento"
@@ -307,7 +280,7 @@ export default function Pessoa() {
                                         <label htmlFor="complemento">Complemento</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2 mb-3">
+                                <div className="col-12 md:col-6 lg:col-3 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="telefone"
@@ -319,7 +292,7 @@ export default function Pessoa() {
                                         <label htmlFor="telefone">Telefone</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2 mb-3">
+                                <div className="col-12 md:col-6 lg:col-3 mb-3">
                                     <FloatLabel>
                                         <InputText
                                             name="email"
@@ -331,42 +304,40 @@ export default function Pessoa() {
                                         <label htmlFor="email">Email</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2 mb-3">
+                                <div className="col-12 md:col-6 lg:col-3 mb-3">
                                     <FloatLabel>
                                         <Dropdown
+                                            name="cidade_id"
+                                            id="cidade_id"
                                             value={formData.cidade_id}
                                             options={cities}
+                                            onChange={(e) => handleChange({ target: { id: 'cidade_id', value: e.value } })}
                                             optionLabel="nome"
-                                            placeholder="Selecione uma cidade"
-                                            onChange={(e) => setFormData(prevData => ({ ...prevData, cidade_id: e.value.id }))}
+                                            placeholder="Selecione a cidade"
                                             style={{ width: '100%' }}
                                         />
                                         <label htmlFor="cidade_id">Cidade</label>
                                     </FloatLabel>
                                 </div>
-                                <div className="col-12 md:col-6 lg:col-2 mb-3">
+                                <div className="col-12 md:col-6 lg:col-3 mb-3">
                                     <FloatLabel>
                                         <Dropdown
+                                            name="bairro_id"
+                                            id="bairro_id"
                                             value={formData.bairro_id}
                                             options={neighborhoods}
+                                            onChange={(e) => handleChange({ target: { id: 'bairro_id', value: e.value } })}
                                             optionLabel="nome"
-                                            placeholder="Selecione um bairro"
-                                            onChange={(e) => setFormData(prevData => ({ ...prevData, bairro_id: e.value.id }))}
+                                            placeholder="Selecione o bairro"
                                             style={{ width: '100%' }}
                                         />
                                         <label htmlFor="bairro_id">Bairro</label>
                                     </FloatLabel>
                                 </div>
                             </div>
-                            <div className="card flex flex-wrap justify-content-left gap-3">
-                                <Button type="submit" label="Confirmar" severity="success" icon="pi pi-verified" />
-                                <Button
-                                    icon="pi pi-times-circle"
-                                    type="button"
-                                    label="Cancelar"
-                                    severity="danger"
-                                    onClick={handleCancel}
-                                />
+                            <div className="form-actions">
+                                <Button label={editingId ? "Atualizar" : "Incluir"} type="submit" className="p-button-success mr-2" />
+                                <Button label="Cancelar" type="button" className="p-button-danger" onClick={handleCancel} />
                             </div>
                         </form>
                     </TabPanel>
