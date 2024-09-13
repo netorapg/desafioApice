@@ -102,8 +102,8 @@ export default function Pessoa() {
                     complemento: formData.complemento,
                     telefone: formData.telefone,
                     email: formData.email,
-                    cidade_id: formData.cidade_id,
-                    bairro_id: formData.bairro_id
+                    cidade_id: formData.cidade_id.id,
+                    bairro_id: formData.bairro_id.id
                 }),
             });
 
