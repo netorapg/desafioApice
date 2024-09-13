@@ -40,19 +40,15 @@ Atualmente, estou desenvolvendo uma aplicação de gerenciamento de pessoas e ve
    - Assim como a tela de cidade, está com todas as funcionalidades CRUD implementadas.
 
    **Tela de Cadastro de Pessoas:**
-   - As funcionalidades CRUD estão implementadas, conduto alguns ajustes são necessários:
+   - As funcionalidades CRUD estão implementadas, contudo alguns ajustes são necessários:
    - Ao selecionar a opção de editar, todos os dados são puxados para edição, menos a de `CEP`, o que o obriga a reescreve-lo caso não haja interesse em editá-lo, 
    até o momento a causa desse problema não foi identificada.
-   - No card das pessoas cadastradas, a aba de cidade apenas mostra o `ID`, deve ajustar para pegar o `nome da cidade`.
 
    **Tela de Cadastro de Produtos:**
    - Funcionando de forma esperada assim como as telas de Cadastro de Cidade e Bairro.
 
    **Tela de Cadastro de Vendas:**
    - Funções CRUD implementadas, contudo, há ajustes a fazer referente à edição, visto que os dados de venda_itens não são puxados para a edição.
-
-   **OBS:**
-   - Todas as telas precisam receber um polimento visual.
 
 ## Próximos Passos
 
@@ -61,7 +57,5 @@ Atualmente, estou desenvolvendo uma aplicação de gerenciamento de pessoas e ve
 3. Finalizar a implementação da tela de relatório de pessoas.
 4. Finalizar a implementação da tela de relatório de vendas.
 5. Testar e validar todas as funcionalidades desenvolvidas.
-6. Aplicar um css global em todas as telas
-
 
 **By netorapg**
