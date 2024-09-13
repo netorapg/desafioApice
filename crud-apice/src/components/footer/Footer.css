@@ -1,8 +1,7 @@
 .footer {
-    background-color: #ffffff;
-    color: rgb(0, 0, 0);
+    background-color: black;
     text-align: left;
-   /* padding: 1rem 0; */
+    color: white;
     font-family: Arial, sans-serif;
     font-size: 0.9rem;
     box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);

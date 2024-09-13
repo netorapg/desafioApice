@@ -7,7 +7,6 @@ import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { Dropdown } from 'primereact/dropdown';
 import 'primeflex/primeflex.css';
-
 export default function Pessoa() {
     const [formData, setFormData] = useState({
         codigo: '',

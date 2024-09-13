@@ -1,0 +1,31 @@
+/* Header.css */
+
+.header {
+    background-color: #4CAF50;
+    padding: 20px;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    color: white;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 2.5em;
+}
+
+.header nav {
+    margin-top: 10px;
+}
+
+.header nav a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 1.2em;
+    transition: color 0.3s;
+}
+
+.header nav a:hover {
+    color: #ddd;
+}
