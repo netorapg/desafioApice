@@ -20,7 +20,84 @@ db.connect(err => {
         return;
     }
     console.log('Conectado ao banco de dados MySQL');
+    createDatabaseAndTables();
 });
+
+const createDatabaseAndTables = () => {
+    const createDatabaseSql = `CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`;
+    db.query(createDatabaseSql, (err) => {
+        if (err) {
+            console.error('Erro ao criar o banco de dados:', err);
+            return;
+        }
+        console.log('Banco de dados criado ou já existe');
+
+        const useDatabaseSql = `USE ${process.env.DB_NAME}`;
+        db.query(useDatabaseSql, (err) => {
+            if (err) {
+                console.error('Erro ao selecionar o banco de dados:', err);
+                return;
+            }
+            console.log('Banco de dados selecionado');
+
+            const createTables = [
+                `CREATE TABLE IF NOT EXISTS cidade (
+                    id INT PRIMARY KEY,
+                    nome VARCHAR(255) NOT NULL,
+                    uf VARCHAR(2) NOT NULL
+                )`,
+                `CREATE TABLE IF NOT EXISTS bairro (
+                    id INT PRIMARY KEY,
+                    nome VARCHAR(255) NOT NULL
+                )`,
+                `CREATE TABLE IF NOT EXISTS pessoa (
+                    id INT PRIMARY KEY,
+                    nome VARCHAR(255) NOT NULL,
+                    cidade_id INT,
+                    bairro_id INT,
+                    cep VARCHAR(10),
+                    endereco VARCHAR(255),
+                    numero VARCHAR(10),
+                    complemento VARCHAR(255),
+                    telefone VARCHAR(20),
+                    email VARCHAR(255),
+                    FOREIGN KEY (cidade_id) REFERENCES cidade(id),
+                    FOREIGN KEY (bairro_id) REFERENCES bairro(id)
+                )`,
+                `CREATE TABLE IF NOT EXISTS produto (
+                    id INT PRIMARY KEY,
+                    nome VARCHAR(255) NOT NULL,
+                    preco DECIMAL(10, 2) NOT NULL
+                )`,
+                `CREATE TABLE IF NOT EXISTS vendas (
+                    id INT PRIMARY KEY,
+                    pessoa_id INT,
+                    dt_venda DATE,
+                    FOREIGN KEY (pessoa_id) REFERENCES pessoa(id)
+                )`,
+                `CREATE TABLE IF NOT EXISTS venda_itens (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    venda_id INT,
+                    produto_id INT,
+                    qtde INT,
+                    vr_venda DECIMAL(10, 2),
+                    FOREIGN KEY (venda_id) REFERENCES vendas(id),
+                    FOREIGN KEY (produto_id) REFERENCES produto(id)
+                )`
+            ];
+
+            createTables.forEach((sql, index) => {
+                db.query(sql, (err) => {
+                    if (err) {
+                        console.error(`Erro ao criar tabela ${index + 1}:`, err);
+                    } else {
+                        console.log(`Tabela ${index + 1} criada ou já existe`);
+                    }
+                });
+            });
+        });
+    });
+};
 
 // Rotas
 app.get('/', (req, res) => {
@@ -201,7 +278,7 @@ app.post('/api/pessoas', (req, res) => {
     const { id, nome, cidade_id, bairro_id, cep, endereco, numero, complemento, telefone, email } = req.body;
     console.log('Dados recebidos para inserção de pessoa:', { id, nome, cidade_id, bairro_id, cep, endereco, numero, complemento, telefone, email });
 
-    if (!id || !nome || !cidade_id || !bairro_id || !cep || !endereco || !numero || !telefone || !email) {
+    if (!id || !nome) {
         console.log('Erro: Dados insuficientes para inserção');
         return res.status(400).send('Dados insuficientes para inserção');
     }
@@ -210,18 +287,35 @@ app.post('/api/pessoas', (req, res) => {
     db.query(sql, [id, nome, cidade_id, bairro_id, cep, endereco, numero, complemento, telefone, email], (err, results) => {
         if (err) {
             console.error('Erro ao adicionar pessoa:', err);
-            return res.status(500).send(err);
+            return res.status(500).send(`Erro ao adicionar pessoa: ${err.message}`);
         }
         res.json({ id, nome, cidade_id, bairro_id, cep, endereco, numero, complemento, telefone, email });
     });
 });
 
+app.delete('/api/pessoas/:id', (req, res) => {
+    const { id } = req.params;
+
+    const sql = 'DELETE FROM pessoa WHERE id = ?';
+    db.query(sql, [id], (err, results) => {
+        if (err) {
+            console.error('Erro ao deletar pessoa:', err);
+            return res.status(500).send(`Erro ao deletar pessoa: ${err.message}`);
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).send('Pessoa não encontrada');
+        }
+
+        res.status(200).send('Pessoa deletada com sucesso');
+    });
+});
 
 app.put('/api/pessoas/:id', (req, res) => {
     const { id } = req.params;
     const { nome, cidade_id, bairro_id, cep, endereco, numero, complemento, telefone, email } = req.body;
 
-    if (!nome || !cidade_id || !bairro_id || !cep || !endereco || !numero || !telefone || !email) {
+    if (!nome) {
         return res.status(400).send('Dados insuficientes para atualização');
     }
 
@@ -240,394 +334,8 @@ app.put('/api/pessoas/:id', (req, res) => {
     });
 });
 
-app.delete('/api/pessoas/:id', (req, res) => {
-    const { id } = req.params;
-
-    // Primeiro, limpe os valores de cidade_id e bairro_id
-    const updateSql = 'UPDATE pessoa SET cidade_id = NULL, bairro_id = NULL WHERE id = ?';
-    db.query(updateSql, [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao limpar as chaves estrangeiras:', err);
-            return res.status(500).send(`Erro ao limpar as chaves estrangeiras: ${err.message}`);
-        }
-
-        // Em seguida, delete o registro na tabela `pessoa`
-        const deletePessoaSql = 'DELETE FROM pessoa WHERE id = ?';
-        db.query(deletePessoaSql, [id], (err, results) => {
-            if (err) {
-                console.error('Erro ao deletar pessoa:', err);
-                return res.status(500).send(`Erro ao deletar pessoa: ${err.message}`);
-            }
-
-            if (results.affectedRows === 0) {
-                return res.status(404).send('Pessoa não encontrada');
-            }
-
-            res.status(200).send('Pessoa deletada com sucesso');
-        });
-    });
-});
-
-
-app.get('/api/produtos', (req, res) => {
-    db.query('SELECT * FROM produto', (err, results) => {
-        if (err) {
-            console.error('Erro ao listar produtos:', err);
-            return res.status(500).send(err);
-        }
-        res.json(results);
-    });
-});
-
-app.get('/api/produtos/:id', (req, res) => {
-    const { id } = req.params;
-
-    db.query('SELECT * FROM produto WHERE id = ?', [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar produto:', err);
-            return res.status(500).send(err);
-        }
-
-        if (results.length === 0) {
-            return res.status(404).send('Produto não encontrado');
-        }
-
-        res.json(results[0]);
-    });
-});
-
-app.post('/api/produtos', (req, res) => {
-    const { id, nome, preco } = req.body;
-    console.log('Dados recebidos para inserção de produto:', { id, nome, preco });
-
-    if (!id || !nome || !preco) {
-        console.log('Erro: Dados insuficientes para inserção');
-        return res.status(400).send('Dados insuficientes para inserção');
-    }
-
-    const sql = 'INSERT INTO produto (id, nome, preco) VALUES (?, ?, ?)';
-    db.query(sql, [id, nome, preco], (err, results) => {
-        if (err) {
-            console.error('Erro ao adicionar produto:', err);
-            return res.status(500).send(err);
-        }
-        res.json({ id, nome, preco });
-    });
-});
-
-app.delete('/api/produtos/:id', (req, res) => {
-    const { id } = req.params;
-
-    const sql = 'DELETE FROM produto WHERE id = ?';
-    db.query(sql, [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao deletar produto:', err);
-            return res.status(500).send(`Erro ao deletar produto: ${err.message}`);
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).send('Produto não encontrado');
-        }
-
-        res.status(200).send('Produto deletado com sucesso');
-    });
-});
-
-app.put('/api/produtos/:id', (req, res) => {
-    const { id } = req.params;
-    const { nome, preco } = req.body;
-
-    if (!nome || !preco) {
-        return res.status(400).send('Dados insuficientes para atualização');
-    }
-
-    const sql = 'UPDATE produto SET nome = ?, preco = ? WHERE id = ?';
-    db.query(sql, [nome, preco, id], (err, results) => {
-        if (err) {
-            console.error('Erro ao atualizar produto:', err);
-            return res.status(500).send(`Erro ao atualizar produto: ${err.message}`);
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).send('Produto não encontrado');
-        }
-
-        res.status(200).send('Produto atualizado com sucesso');
-    });
-});
-
-app.get('/api/vendas', (req, res) => {
-    db.query('SELECT * FROM vendas', (err, results) => {
-        if (err) {
-            console.error('Erro ao listar vendas:', err);
-            return res.status(500).json({ error: 'Erro ao listar vendas' });
-        }
-        res.json(results); // Verifique se 'results' é o formato JSON esperado
-    });
-});
-
-
-app.get('/api/vendas/:id', (req, res) => {
-    const { id } = req.params;
-
-    db.query('SELECT * FROM vendas WHERE id = ?', [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar venda:', err);
-            return res.status(500).json({ error: 'Erro ao buscar venda', details: err.message });
-        }
-
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Venda não encontrada' });
-        }
-
-        console.log('Venda encontrada:', results[0]); // Log para depuração
-
-        res.json(results[0]);
-    });
-});
-
-
-app.post('/api/vendas', (req, res) => {
-    const { id, pessoa_id, dt_venda } = req.body;
-    console.log('Dados recebidos para inserção de venda:', { id, pessoa_id, dt_venda });
-
-    if (!id || !pessoa_id || !dt_venda) {
-        console.log('Erro: Dados insuficientes para inserção');
-        return res.status(400).send('Dados insuficientes para inserção');
-    }
-
-    const sql = 'INSERT INTO vendas (id, pessoa_id, dt_venda) VALUES (?, ?, ?)';
-    db.query(sql, [id, pessoa_id, dt_venda], (err, results) => {
-        if (err) {
-            console.error('Erro ao adicionar venda:', err);
-            return res.status(500).send(err);
-        }
-        res.json({ id, pessoa_id, dt_venda });
-    });
-});
-
-app.delete('/api/vendas/:id', (req, res) => {
-    const { id } = req.params;
-
-    const sql = 'DELETE FROM vendas WHERE id = ?';
-    db.query(sql, [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao deletar venda:', err);
-            return res.status(500).send(`Erro ao deletar venda: ${err.message}`);
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).send('Venda não encontrada');
-        }
-
-        res.status(200).send('Venda deletada com sucesso');
-    });
-});
-
-app.put('/api/vendas/:id', (req, res) => {
-    const { id } = req.params;
-    const { pessoa_id, dt_venda } = req.body;
-
-    if (!pessoa_id || !dt_venda) {
-        return res.status(400).send('Dados insuficientes para atualização');
-    }
-
-    const sql = 'UPDATE vendas SET pessoa_id = ?, dt_venda = ? WHERE id = ?';
-    db.query(sql, [pessoa_id, dt_venda, id], (err, results) => {
-        if (err) {
-            console.error('Erro ao atualizar venda:', err);
-            return res.status(500).send(`Erro ao atualizar venda: ${err.message}`);
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).send('Venda não encontrada');
-        }
-
-        res.status(200).send('Venda atualizada com sucesso');
-    });
-});
-
-app.get('/api/venda_itens', (req, res) => {
-    db.query('SELECT * FROM venda_itens', (err, results) => {
-        if (err) {
-            console.error('Erro ao listar itens de venda:', err);
-            return res.status(500).send(err);
-        }
-        res.json(results);
-    }
-    );
-});
-
-app.get('/api/venda_itens/:id', (req, res) => {
-    const { id } = req.params;
-
-    db.query('SELECT * FROM venda_itens WHERE venda_id = ?', [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao buscar itens de venda:', err);
-            return res.status(500).json({ error: 'Erro ao buscar itens de venda', details: err.message });
-        }
-
-        if (results.length === 0) {
-            return res.status(404).json({ error: 'Itens de venda não encontrados' });
-        }
-
-        res.json(results);
-    });
-});
-
-
-app.post('/api/venda_itens', (req, res) => {
-    const {venda_id, produto_id, qtde, vr_venda } = req.body;
-    console.log('Dados recebidos para inserção de item de venda:', {venda_id, produto_id, qtde, vr_venda });
-
-    if (!venda_id || !produto_id || !qtde || !vr_venda) {
-        console.log('Erro: Dados insuficientes para inserção');
-        return res.status(400).send('Dados insuficientes para inserção');
-    }
-
-    const sql = 'INSERT INTO venda_itens (venda_id, produto_id, qtde, vr_venda) VALUES (?, ?, ?, ?)';
-    db.query(sql, [ venda_id, produto_id, qtde, vr_venda], (err, results) => {
-        if (err) {
-            console.error('Erro ao adicionar item de venda:', err);
-            return res.status(500).send(err);
-        }
-        res.json({ venda_id, produto_id, qtde, vr_venda });
-    });
-});
-
-
-app.delete('/api/venda_itens/:id', (req, res) => {
-    const { id } = req.params;
-
-    const sql = 'DELETE FROM venda_itens WHERE id = ?';
-    db.query(sql, [id], (err, results) => {
-        if (err) {
-            console.error('Erro ao deletar item de venda:', err);
-            return res.status(500).send(`Erro ao deletar item de venda: ${err.message}`);
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).send('Item de venda não encontrado');
-        }
-
-        res.status(200).send('Item de venda deletado com sucesso');
-    });
-});
-
-app.put('/api/venda_itens/:id', (req, res) => {
-    const { id } = req.params;
-    const { venda_id, produto_id, qtde, vr_venda } = req.body;
-
-    if (!venda_id || !produto_id || !qtde || !vr_venda) {
-        return res.status(400).send('Dados insuficientes para atualização');
-    }
-
-    const sql = 'UPDATE venda_itens SET venda_id = ?, produto_id = ?, qtde = ?, vr_venda = ? WHERE id = ?';
-    db.query(sql, [venda_id, produto_id, qtde, vr_venda, id], (err, results) => {
-        if (err) {
-            console.error('Erro ao atualizar item de venda:', err);
-            return res.status(500).send(`Erro ao atualizar item de venda: ${err.message}`);
-        }
-
-        if (results.affectedRows === 0) {
-            return res.status(404).send('Item de venda não encontrado');
-        }
-
-        res.status(200).send('Item de venda atualizado com sucesso');
-    });
-});
-
-app.get('/api/pessoas', async (req, res) => {
-    const { nome, cidade, bairro } = req.query;
-
-    // Inicia a consulta SQL
-    let query = `
-        SELECT p.id, p.nome, p.telefone, c.nome as cidade 
-        FROM pessoa p 
-        JOIN cidade c ON p.cidade_id = c.id
-        WHERE 1=1
-    `;
-    
-    // Array para armazenar parâmetros da consulta
-    const params = [];
-    
-    // Adiciona filtro para o nome se fornecido
-    if (nome) {
-        query += ` AND p.nome LIKE ?`;
-        params.push(`%${nome}%`);
-    }
-
-    // Adiciona filtro para a cidade se fornecido
-    if (cidade) {
-        query += ` AND c.nome LIKE ?`;
-        params.push(`%${cidade}%`);
-    }
-
-    // Adiciona filtro para o bairro se fornecido
-    if (bairro) {
-        query += ` AND p.bairro LIKE ?`;
-        params.push(`%${bairro}%`);
-    }
-
-    console.log('Consulta SQL:', query); // Log da consulta SQL
-    console.log('Parâmetros:', params); // Log dos parâmetros
-
-    try {
-        // Executa a consulta
-        const [pessoas] = await db.query(query, params);
-        console.log('Resposta do banco de dados:', pessoas); // Log da resposta do banco de dados
-        res.json(pessoas);
-    } catch (error) {
-        console.error('Erro ao buscar pessoas', error);
-        res.status(500).json({ error: 'Erro ao buscar pessoas' });
-    }
-});
-
-app.get('/api/vendas', async (req, res) => {
-    const { dataInicio, dataFim, pessoa, produto } = req.query;
-
-    let query = `
-        SELECT v.id, v.dt_venda AS data, p.nome AS pessoa, pr.nome AS produto, vi.qtde AS quantidade, vi.vr_item AS valor_total
-        FROM venda v
-        JOIN venda_itens vi ON v.id = vi.venda_id
-        JOIN pessoa p ON v.pessoa_id = p.id
-        JOIN produto pr ON vi.produto_id = pr.id
-        WHERE 1=1
-    `;
-    const params = [];
-
-    if (dataInicio) {
-        query += ` AND v.dt_venda >= ?`;
-        params.push(new Date(dataInicio).toISOString().slice(0, 19).replace('T', ' '));
-    }
-
-    if (dataFim) {
-        query += ` AND v.dt_venda <= ?`;
-        params.push(new Date(dataFim).toISOString().slice(0, 19).replace('T', ' '));
-    }
-
-    if (pessoa) {
-        query += ` AND p.nome LIKE ?`;
-        params.push(`%${pessoa}%`);
-    }
-
-    if (produto) {
-        query += ` AND pr.nome LIKE ?`;
-        params.push(`%${produto}%`);
-    }
-
-    try {
-        const vendas = await db.query(query, params);
-        res.json(vendas);
-    } catch (error) {
-        console.error('Erro ao buscar vendas', error);
-        res.status(500).json({ error: 'Erro ao buscar vendas' });
-    }
-});
-
-
 // Iniciar o servidor
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
