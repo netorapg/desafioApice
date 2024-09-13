@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Button, InputText, Calendar } from 'primereact';
+import { Button } from 'primereact/button';
+import { InputText } from 'primereact/inputtext';
+import { Calendar } from 'primereact/calendar';
 
 const RelatorioVendas = () => {
   const [vendas, setVendas] = useState([]);

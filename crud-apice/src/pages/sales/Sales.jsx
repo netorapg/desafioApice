@@ -31,16 +31,23 @@ export default function Sales() {
             const text = await response.text();
             console.log('Resposta recebida:', text);
             const data = JSON.parse(text);
-
+    
             if (!Array.isArray(data)) {
                 throw new Error('Resposta da API não é um array');
             }
-
+    
             const salesWithItems = await Promise.all(data.map(async sale => {
                 const itemsResponse = await fetch(`http://localhost:3001/api/venda_itens/${sale.id}`);
                 const itemsText = await itemsResponse.text();
                 console.log('Itens recebidos:', itemsText);
-                const itemsData = JSON.parse(itemsText);
+    
+                let itemsData;
+                try {
+                    itemsData = JSON.parse(itemsText);
+                } catch (error) {
+                    itemsData = [];
+                }
+    
                 return { ...sale, itens: itemsData };
             }));
             setSales(salesWithItems);
@@ -225,7 +232,7 @@ export default function Sales() {
     // Edit an existing sale
     const handleEdit = async (sale) => {
         const saleToEdit = sales.find(s => s.id === sale.id);
-
+    
         if (saleToEdit) {
             setFormData({
                 codigo: saleToEdit.id,
@@ -236,7 +243,7 @@ export default function Sales() {
             setDate(new Date(saleToEdit.dt_venda));
     
             // Load sale items
-            const response = await fetch(`http://localhost:3001/api/venda_itens?venda_id=${saleToEdit.id}`);
+            const response = await fetch(`http://localhost:3001/api/venda_itens/${saleToEdit.id}`);
             const itemsData = await response.json();
             const items = itemsData.map(item => ({
                 produto: products.find(p => p.id === item.produto_id),
@@ -294,6 +301,12 @@ export default function Sales() {
         }
     };
 
+    // Function to format date
+    const formatDate = (dateString) => {
+        const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+        return new Date(dateString).toLocaleDateString('pt-BR', options);
+    };
+
     return (
         <Card>
             <h1>{editingID ? 'Editar Venda' : 'Venda'}</h1>
@@ -302,19 +315,19 @@ export default function Sales() {
                     <TabPanel header="Lista">
                         <div className='grid'>
                             {sales.map(sale => (
-                                <div key={sale.id} className="col-12 md:col-6 lg:col-3">
-                                    <Card title={sale.id} subTitle={sale.dt_venda}>
-                                        <p><strong>Código:</strong> {sale.id}</p>
+                                <div key={sale.id} className="col-12 md:col-6 lg:col-4 mb-3">
+                                    <Card title={`Venda ${formatDate(sale.dt_venda)}`}>
+                                        <p>Código: {sale.id}</p>
                                         <p><strong>Pessoa:</strong> {people.find(p => p.id === sale.pessoa_id)?.nome || 'Desconhecido'}</p>
 
                                         <Button
                                             icon="pi pi-pencil"
-                                            className="p-button-rounded p-button-secondary"
+                                            className="p-button p-button-warning mr-2"
                                             onClick={() => handleEdit(sale)}
                                         />
                                         <Button
                                             icon="pi pi-trash"
-                                            className="p-button-rounded p-button-danger"
+                                            className="p-button p-button-danger"
                                             onClick={() => handleDelete(sale.id)}
                                         />
                                     </Card>
