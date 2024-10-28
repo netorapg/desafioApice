@@ -149,17 +149,20 @@ export default function Sales() {
     // Submit the form
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+    
         if (items.length === 0) {
             alert('Por favor, adicione pelo menos um item à venda.');
             return;
         }
-
+    
         const method = editingID ? 'PUT' : 'POST';
         const url = editingID ? `http://localhost:3001/api/vendas/${formData.codigo}` : 'http://localhost:3001/api/vendas';
-
+    
         const formattedDate = date ? date.toISOString().split('T')[0] : null;
-
+    
+        // Calcular o total da venda
+        const totalVenda = items.reduce((total, item) => total + item.valorItem, 0).toFixed(2);
+    
         try {
             const response = await fetch(url, {
                 method,
@@ -170,14 +173,15 @@ export default function Sales() {
                     id: formData.codigo,
                     dt_venda: formattedDate,
                     pessoa_id: selectedPerson ? selectedPerson.id : null,
+                    total_venda: totalVenda, // Inclui o total da venda
                 }),
             });
-
+    
             if (response.ok) {
                 const venda = await response.json();
                 const vendaId = venda.id;
-
-                // Save sale items
+    
+                // Salvar itens da venda
                 const itemResponses = await Promise.all(items.map(item => {
                     return fetch('http://localhost:3001/api/venda_itens', {
                         method: 'POST',
@@ -192,9 +196,9 @@ export default function Sales() {
                         }),
                     });
                 }));
-
+    
                 const allItemsSaved = itemResponses.every(res => res.ok);
-
+    
                 if (allItemsSaved) {
                     alert(editingID ? 'Venda atualizada com sucesso!' : 'Venda cadastrada com sucesso!');
                     setFormData({

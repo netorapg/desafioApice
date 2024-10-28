@@ -73,6 +73,7 @@ const createDatabaseAndTables = () => {
                     id INT PRIMARY KEY,
                     pessoa_id INT,
                     dt_venda DATE,
+                    total_venda DECIMAL(10, 2),
                     FOREIGN KEY (pessoa_id) REFERENCES pessoa(id)
                 )`,
                 `CREATE TABLE IF NOT EXISTS venda_itens (
@@ -344,25 +345,26 @@ app.get('/api/vendas', (req, res) => {
     });
 });
 
-// Rota para adicionar venda
 app.post('/api/vendas', (req, res) => {
-    const { id, pessoa_id, dt_venda } = req.body;
-    console.log('Dados recebidos para inserção de venda:', { id, pessoa_id, dt_venda });
+    const { id, pessoa_id, dt_venda, total_venda } = req.body; // Adicione total_venda
 
-    if (!id || !pessoa_id || !dt_venda) {
+    console.log('Dados recebidos para inserção de venda:', { id, pessoa_id, dt_venda, total_venda });
+
+    if (!id || !pessoa_id || !dt_venda || total_venda === undefined) {
         console.log('Erro: Dados insuficientes para inserção');
         return res.status(400).send('Dados insuficientes para inserção');
     }
 
-    const sql = 'INSERT INTO vendas (id, pessoa_id, dt_venda) VALUES (?, ?, ?)';
-    db.query(sql, [id, pessoa_id, dt_venda], (err, results) => {
+    const sql = 'INSERT INTO vendas (id, pessoa_id, dt_venda, total_venda) VALUES (?, ?, ?, ?)'; // Adicione total_venda à consulta
+    db.query(sql, [id, pessoa_id, dt_venda, total_venda], (err, results) => {
         if (err) {
             console.error('Erro ao adicionar venda:', err);
             return res.status(500).send(`Erro ao adicionar venda: ${err.message}`);
         }
-        res.json({ id, pessoa_id, dt_venda });
+        res.json({ id, pessoa_id, dt_venda, total_venda }); // Retorne total_venda
     });
 });
+
 
 // Rota para deletar venda
 app.delete('/api/vendas/:id', (req, res) => {
@@ -386,14 +388,14 @@ app.delete('/api/vendas/:id', (req, res) => {
 // Rota para atualizar venda
 app.put('/api/vendas/:id', (req, res) => {
     const { id } = req.params;
-    const { pessoa_id, dt_venda } = req.body;
+    const { pessoa_id, dt_venda, total_venda } = req.body; // Adicione total_venda
 
-    if (!pessoa_id || !dt_venda) {
+    if (!pessoa_id || !dt_venda || total_venda === undefined) {
         return res.status(400).send('Dados insuficientes para atualização');
     }
 
-    const sql = 'UPDATE vendas SET pessoa_id = ?, dt_venda = ? WHERE id = ?';
-    db.query(sql, [pessoa_id, dt_venda, id], (err, results) => {
+    const sql = 'UPDATE vendas SET pessoa_id = ?, dt_venda = ?, total_venda = ? WHERE id = ?'; // Adicione total_venda à consulta
+    db.query(sql, [pessoa_id, dt_venda, total_venda, id], (err, results) => {
         if (err) {
             console.error('Erro ao atualizar venda:', err);
             return res.status(500).send(`Erro ao atualizar venda: ${err.message}`);
@@ -406,6 +408,7 @@ app.put('/api/vendas/:id', (req, res) => {
         res.status(200).send('Venda atualizada com sucesso');
     });
 });
+
 
 const PORT = process.env.PORT || 3000;
 

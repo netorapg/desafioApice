@@ -8,6 +8,7 @@ import { Calendar } from 'primereact/calendar';
 const RelatorioVendas = () => {
   const [vendas, setVendas] = useState([]);
   const [filteredVendas, setFilteredVendas] = useState([]);
+  const [pessoasMap, setPessoasMap] = useState({}); // Mapeia IDs de pessoas para nomes
   const [filters, setFilters] = useState({
     dataInicio: '',
     dataFim: '',
@@ -15,22 +16,32 @@ const RelatorioVendas = () => {
     produto: '',
   });
 
-  // Fetch initial vendas data on mount
   useEffect(() => {
+    fetchPessoas();
     fetchVendas();
   }, []);
 
-  // Apply filters whenever vendas or filters change
   useEffect(() => {
     applyFilters();
   }, [vendas, filters]);
 
+  const fetchPessoas = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/pessoas`);
+      const data = await response.json();
+      console.log('Pessoas recebidas:', data);
+      const map = Object.fromEntries(data.map(pessoa => [pessoa.id, pessoa.nome]));
+      setPessoasMap(map);
+    } catch (error) {
+      console.error('Erro ao buscar pessoas', error);
+    }
+  };
+
   const fetchVendas = async () => {
     try {
-      const queryParams = new URLSearchParams(filters);
-      const response = await fetch(`http://localhost:3001/api/vendas?${queryParams}`);
+      const response = await fetch(`http://localhost:3001/api/vendas`);
       const data = await response.json();
-      console.log('Dados recebidos:', data); // Verifique a estrutura dos dados
+      console.log('Vendas recebidas:', data);
       setVendas(data);
     } catch (error) {
       console.error('Erro ao buscar vendas', error);
@@ -38,20 +49,17 @@ const RelatorioVendas = () => {
   };
 
   const applyFilters = () => {
-    try {
-      const filtered = vendas.filter((venda) => {
-        if (!venda) return false; // Verifica se a venda é válida
-        const matchesDataInicio = filters.dataInicio ? new Date(venda.data) >= new Date(filters.dataInicio) : true;
-        const matchesDataFim = filters.dataFim ? new Date(venda.data) <= new Date(filters.dataFim) : true;
-        const matchesPessoa = venda.nome_pessoa && venda.nome_pessoa.toLowerCase().includes(filters.pessoa.toLowerCase());
-        const matchesProduto = venda.produto && venda.produto.toLowerCase().includes(filters.produto.toLowerCase());
+    const filtered = vendas.filter((venda) => {
+      const matchesDataInicio = filters.dataInicio ? new Date(venda.dt_venda) >= new Date(filters.dataInicio) : true;
+      const matchesDataFim = filters.dataFim ? new Date(venda.dt_venda) <= new Date(filters.dataFim) : true;
+      const matchesPessoa = venda.pessoa_id && pessoasMap[venda.pessoa_id] && pessoasMap[venda.pessoa_id].toLowerCase().includes(filters.pessoa.toLowerCase());
+      const matchesProduto = venda.produto && venda.produto.toLowerCase().includes(filters.produto.toLowerCase());
 
-        return matchesDataInicio && matchesDataFim && matchesPessoa && matchesProduto;
-      });
-      setFilteredVendas(filtered);
-    } catch (error) {
-      console.error('Erro ao aplicar filtros', error);
-    }
+      return matchesDataInicio && matchesDataFim && matchesPessoa && matchesProduto;
+    });
+
+    console.log('Vendas filtradas:', filtered);
+    setFilteredVendas(filtered);
   };
 
   const handleInputChange = (e) => {
@@ -61,7 +69,7 @@ const RelatorioVendas = () => {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    applyFilters(); // Aplicar os filtros manualmente ao submeter o formulário
+    applyFilters();
   };
 
   return (
@@ -118,9 +126,10 @@ const RelatorioVendas = () => {
         <Button type="submit" label="Filtrar" className="p-button p-component" />
       </form>
 
-      <DataTable value={filteredVendas} className="mt-4">
+      <DataTable value={filteredVendas.length > 0 ? filteredVendas : vendas} className="mt-4">
         <Column field="id" header="Código" />
-        <Column field="nome_pessoa" header="Nome da Pessoa" />
+        <Column field="pessoa_id" header="ID da Pessoa" />
+        <Column field="nome_pessoa" header="Nome da Pessoa" body={(rowData) => pessoasMap[rowData.pessoa_id] || 'Nome não disponível'} />
         <Column field="total_venda" header="Total Venda" />
       </DataTable>
     </div>
