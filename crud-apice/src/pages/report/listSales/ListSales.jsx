@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Calendar } from 'primereact/calendar';
+import { Card } from 'primereact/card';
+import { Panel } from 'primereact/panel';
+import { Button } from 'primereact/button'; // Importando o botão
 
 const RelatorioVendas = () => {
   const [vendas, setVendas] = useState([]);
   const [filteredVendas, setFilteredVendas] = useState([]);
-  const [pessoasMap, setPessoasMap] = useState({}); // Mapeia IDs de pessoas para nomes
+  const [pessoasMap, setPessoasMap] = useState({});
   const [filters, setFilters] = useState({
-    dataInicio: '',
-    dataFim: '',
+    dataInicio: null,
+    dataFim: null,
     pessoa: '',
     produto: '',
   });
@@ -22,14 +24,13 @@ const RelatorioVendas = () => {
   }, []);
 
   useEffect(() => {
-    applyFilters();
+    applyFilters(filters); // Passa os filters para a função
   }, [vendas, filters]);
 
   const fetchPessoas = async () => {
     try {
       const response = await fetch(`http://localhost:3001/api/pessoas`);
       const data = await response.json();
-      console.log('Pessoas recebidas:', data);
       const map = Object.fromEntries(data.map(pessoa => [pessoa.id, pessoa.nome]));
       setPessoasMap(map);
     } catch (error) {
@@ -41,97 +42,116 @@ const RelatorioVendas = () => {
     try {
       const response = await fetch(`http://localhost:3001/api/vendas`);
       const data = await response.json();
-      console.log('Vendas recebidas:', data);
       setVendas(data);
+      setFilteredVendas(data); // Mantenha os dados filtrados iniciais
     } catch (error) {
       console.error('Erro ao buscar vendas', error);
     }
   };
 
-  const applyFilters = () => {
+  const applyFilters = (filters) => {
     const filtered = vendas.filter((venda) => {
-      const matchesDataInicio = filters.dataInicio ? new Date(venda.dt_venda) >= new Date(filters.dataInicio) : true;
-      const matchesDataFim = filters.dataFim ? new Date(venda.dt_venda) <= new Date(filters.dataFim) : true;
-      const matchesPessoa = venda.pessoa_id && pessoasMap[venda.pessoa_id] && pessoasMap[venda.pessoa_id].toLowerCase().includes(filters.pessoa.toLowerCase());
-      const matchesProduto = venda.produto && venda.produto.toLowerCase().includes(filters.produto.toLowerCase());
-
-      return matchesDataInicio && matchesDataFim && matchesPessoa && matchesProduto;
+      const dtVenda = new Date(venda.dt_venda);
+      
+      return (
+        (!filters.dataInicio || dtVenda >= new Date(filters.dataInicio)) &&
+        (!filters.dataFim || dtVenda <= new Date(filters.dataFim)) &&
+        (!filters.pessoa || pessoasMap[venda.pessoa_id]?.toLowerCase().includes(filters.pessoa.toLowerCase())) &&
+        (!filters.produto || (venda.produto && venda.produto.toLowerCase().includes(filters.produto.toLowerCase())))
+      );
     });
-
-    console.log('Vendas filtradas:', filtered);
+  
     setFilteredVendas(filtered);
   };
-
+  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value,
+    }));
   };
 
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    applyFilters();
+  const handleDateChange = (name, value) => {
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value,
+    }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      dataInicio: null,
+      dataFim: null,
+      pessoa: '',
+      produto: '',
+    });
   };
 
   return (
-    <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Relatório de Vendas</h2>
+    <div className="p-m-4">
+      <Card className="p-shadow-4" style={{ borderRadius: '8px', padding: '2rem', backgroundColor: '#f8f9fa' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '1rem', color: '#333' }}>Relatório de Vendas</h2>
 
-      <form onSubmit={handleFilterSubmit} className="p-fluid">
-        <div className="field mb-3">
-          <label htmlFor="dataInicio" className="block text-sm font-medium mb-1">Data Início:</label>
-          <Calendar
-            id="dataInicio"
-            name="dataInicio"
-            value={filters.dataInicio ? new Date(filters.dataInicio) : null}
-            onChange={(e) => setFilters({ ...filters, dataInicio: e.value ? e.value.toISOString().split('T')[0] : '' })}
-            dateFormat="yy-mm-dd"
-            placeholder="Selecione a data"
-            className="w-full"
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="dataFim" className="block text-sm font-medium mb-1">Data Fim:</label>
-          <Calendar
-            id="dataFim"
-            name="dataFim"
-            value={filters.dataFim ? new Date(filters.dataFim) : null}
-            onChange={(e) => setFilters({ ...filters, dataFim: e.value ? e.value.toISOString().split('T')[0] : '' })}
-            dateFormat="yy-mm-dd"
-            placeholder="Selecione a data"
-            className="w-full"
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="pessoa" className="block text-sm font-medium mb-1">Pessoa:</label>
-          <InputText
-            id="pessoa"
-            name="pessoa"
-            value={filters.pessoa}
-            onChange={handleInputChange}
-            placeholder="Filtrar por pessoa"
-            className="w-full"
-          />
-        </div>
-        <div className="field mb-3">
-          <label htmlFor="produto" className="block text-sm font-medium mb-1">Produto:</label>
-          <InputText
-            id="produto"
-            name="produto"
-            value={filters.produto}
-            onChange={handleInputChange}
-            placeholder="Filtrar por produto"
-            className="w-full"
-          />
-        </div>
-        <Button type="submit" label="Filtrar" className="p-button p-component" />
-      </form>
+        <Panel header="Filtros" toggleable className="p-mb-3" style={{ backgroundColor: '#e9ecef', borderRadius: '8px' }}>
+          <div className="p-fluid p-formgrid p-grid">
+            <div className="p-field p-col-12 p-md-6">
+              <label htmlFor="dataInicio" style={{ fontWeight: 'bold' }}>Data Início:</label>
+              <Calendar
+                id="dataInicio"
+                name="dataInicio"
+                value={filters.dataInicio}
+                onChange={(e) => handleDateChange('dataInicio', e.value)}
+                dateFormat="yy-mm-dd"
+                placeholder="Selecione a data"
+                className="w-full"
+              />
+            </div>
+            <div className="p-field p-col-12 p-md-6">
+              <label htmlFor="dataFim" style={{ fontWeight: 'bold' }}>Data Fim:</label>
+              <Calendar
+                id="dataFim"
+                name="dataFim"
+                value={filters.dataFim}
+                onChange={(e) => handleDateChange('dataFim', e.value)}
+                dateFormat="yy-mm-dd"
+                placeholder="Selecione a data"
+                className="w-full"
+              />
+            </div>
+            <div className="p-field p-col-12 p-md-6">
+              <label htmlFor="pessoa" style={{ fontWeight: 'bold' }}>Pessoa:</label>
+              <InputText
+                id="pessoa"
+                name="pessoa"
+                value={filters.pessoa}
+                onChange={handleInputChange}
+                placeholder="Filtrar por pessoa"
+                className="w-full"
+              />
+            </div>
+            <div className="p-field p-col-12 p-md-6">
+              <label htmlFor="produto" style={{ fontWeight: 'bold' }}>Produto:</label>
+              <InputText
+                id="produto"
+                name="produto"
+                value={filters.produto}
+                onChange={handleInputChange}
+                placeholder="Filtrar por produto"
+                className="w-full"
+              />
+            </div>
+          </div>
+          <Button label="Limpar Filtros" icon="pi pi-refresh" onClick={clearFilters} className="p-mt-2" />
+        </Panel>
 
-      <DataTable value={filteredVendas.length > 0 ? filteredVendas : vendas} className="mt-4">
-        <Column field="id" header="Código" />
-        <Column field="pessoa_id" header="ID da Pessoa" />
-        <Column field="nome_pessoa" header="Nome da Pessoa" body={(rowData) => pessoasMap[rowData.pessoa_id] || 'Nome não disponível'} />
-        <Column field="total_venda" header="Total Venda" />
-      </DataTable>
+        <DataTable value={filteredVendas.length > 0 ? filteredVendas : vendas} className="mt-4">
+          <Column field="id" header="Código" style={{ textAlign: 'center' }} />
+          <Column field="pessoa_id" header="ID da Pessoa" style={{ textAlign: 'center' }} />
+          <Column field="nome_pessoa" header="Nome da Pessoa" body={(rowData) => pessoasMap[rowData.pessoa_id] || 'Nome não disponível'} style={{ textAlign: 'center' }} />
+          <Column field="total_venda" header="Total Venda" style={{ textAlign: 'center' }} />
+        </DataTable>
+      </Card>
     </div>
   );
 };
