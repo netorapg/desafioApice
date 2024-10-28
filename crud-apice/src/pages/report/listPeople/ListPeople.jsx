@@ -3,9 +3,12 @@ import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
+import { Card } from 'primereact/card';
+import { Panel } from 'primereact/panel';
 
 const RelatorioPessoas = () => {
   const [pessoas, setPessoas] = useState([]);
+  const [filteredPessoas, setFilteredPessoas] = useState([]);
   const [cidades, setCidades] = useState([]);
   const [filters, setFilters] = useState({
     nome: '',
@@ -20,13 +23,10 @@ const RelatorioPessoas = () => {
 
   const fetchPessoas = async () => {
     try {
-      const queryParams = new URLSearchParams(filters);
-      console.log('Parâmetros de consulta:', queryParams.toString()); // Log dos parâmetros de consulta
-      const response = await fetch(`http://localhost:3001/api/pessoas?${queryParams}`);
-      const text = await response.text(); // Obter a resposta como texto
-      console.log('Resposta da API:', text); // Log da resposta da API
-      const data = JSON.parse(text); // Fazer o parse do JSON
+      const response = await fetch(`http://localhost:3001/api/pessoas`);
+      const data = await response.json();
       setPessoas(data);
+      setFilteredPessoas(data); // Exibir todos inicialmente
     } catch (error) {
       console.error('Erro ao buscar pessoas', error);
     }
@@ -44,13 +44,22 @@ const RelatorioPessoas = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFilters({ ...filters, [name]: value });
-    console.log('Estado dos filtros:', { ...filters, [name]: value }); // Log do estado filters
+    setFilters((prevFilters) => {
+      const newFilters = { ...prevFilters, [name]: value };
+      applyFilters(newFilters);
+      return newFilters;
+    });
   };
 
-  const handleFilterSubmit = (e) => {
-    e.preventDefault();
-    fetchPessoas();
+  const applyFilters = (filters) => {
+    const filtered = pessoas.filter((pessoa) => {
+      return (
+        (filters.nome === '' || pessoa.nome.toLowerCase().includes(filters.nome.toLowerCase())) &&
+        (filters.cidade === '' || getNomeCidade(pessoa.cidade_id).toLowerCase().includes(filters.cidade.toLowerCase())) &&
+        (filters.bairro === '' || pessoa.bairro.toLowerCase().includes(filters.bairro.toLowerCase()))
+      );
+    });
+    setFilteredPessoas(filtered);
   };
 
   const getNomeCidade = (cidadeId) => {
@@ -59,55 +68,63 @@ const RelatorioPessoas = () => {
   };
 
   return (
-    <div className="p-grid p-fluid">
-      <h2>Relatório de Pessoas</h2>
+    <div className="p-m-4">
+      <Card className="p-shadow-4" style={{ borderRadius: '8px', padding: '2rem', backgroundColor: '#f8f9fa' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '1rem', color: '#333' }}>Relatório de Pessoas</h2>
+        
+        <Panel header="Filtros" toggleable className="p-mb-3" style={{ backgroundColor: '#e9ecef', borderRadius: '8px' }}>
+          <div className="p-fluid p-formgrid p-grid">
+            <div className="p-field p-col-12 p-md-4">
+              <label htmlFor="nome" style={{ fontWeight: 'bold' }}>Nome:</label>
+              <InputText
+                id="nome"
+                name="nome"
+                value={filters.nome}
+                onChange={handleInputChange}
+                placeholder="Nome da pessoa"
+              />
+            </div>
+            <div className="p-field p-col-12 p-md-4">
+              <label htmlFor="cidade" style={{ fontWeight: 'bold' }}>Cidade:</label>
+              <InputText
+                id="cidade"
+                name="cidade"
+                value={filters.cidade}
+                onChange={handleInputChange}
+                placeholder="Cidade"
+              />
+            </div>
+            <div className="p-field p-col-12 p-md-4">
+              <label htmlFor="bairro" style={{ fontWeight: 'bold' }}>Bairro:</label>
+              <InputText
+                id="bairro"
+                name="bairro"
+                value={filters.bairro}
+                onChange={handleInputChange}
+                placeholder="Bairro"
+              />
+            </div>
+          </div>
+        </Panel>
 
-      <form onSubmit={handleFilterSubmit} className="p-field p-grid">
-        <div className="p-col-4">
-          <label htmlFor="nome">Nome:</label>
-          <InputText
-            id="nome"
-            name="nome"
-            value={filters.nome}
-            onChange={handleInputChange}
-            placeholder="Nome da pessoa"
-            className="p-inputtext"
+        <DataTable
+          value={filteredPessoas}
+          paginator
+          rows={10}
+          className="p-datatable-gridlines"
+          responsiveLayout="scroll"
+          style={{ marginTop: '1rem', borderRadius: '8px' }}
+        >
+          <Column field="id" header="Código" style={{ textAlign: 'center' }} />
+          <Column field="nome" header="Nome" style={{ textAlign: 'center' }} />
+          <Column
+            header="Cidade"
+            body={(rowData) => getNomeCidade(rowData.cidade_id)}
+            style={{ textAlign: 'center' }}
           />
-        </div>
-        <div className="p-col-4">
-          <label htmlFor="cidade">Cidade:</label>
-          <InputText
-            id="cidade"
-            name="cidade"
-            value={filters.cidade}
-            onChange={handleInputChange}
-            placeholder="Cidade"
-          />
-        </div>
-        <div className="p-col-4">
-          <label htmlFor="bairro">Bairro:</label>
-          <InputText
-            id="bairro"
-            name="bairro"
-            value={filters.bairro}
-            onChange={handleInputChange}
-            placeholder="Bairro"
-          />
-        </div>
-        <div className="p-col-12">
-          <Button type="submit" label="Filtrar" icon="pi pi-search" className="p-button-primary" />
-        </div>
-      </form>
-
-      <DataTable value={pessoas} paginator rows={10} className="p-datatable-gridlines" responsiveLayout="scroll">
-        <Column field="id" header="Código" />
-        <Column field="nome" header="Nome" />
-        <Column 
-          header="Cidade" 
-          body={(rowData) => getNomeCidade(rowData.cidade_id)} // Mapeia o id da cidade para o nome
-        />
-        <Column field="telefone" header="Telefone" />
-      </DataTable>
+          <Column field="telefone" header="Telefone" style={{ textAlign: 'center' }} />
+        </DataTable>
+      </Card>
     </div>
   );
 };

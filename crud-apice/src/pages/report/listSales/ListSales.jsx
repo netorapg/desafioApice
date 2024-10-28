@@ -7,6 +7,7 @@ import { Calendar } from 'primereact/calendar';
 
 const RelatorioVendas = () => {
   const [vendas, setVendas] = useState([]);
+  const [filteredVendas, setFilteredVendas] = useState([]);
   const [filters, setFilters] = useState({
     dataInicio: '',
     dataFim: '',
@@ -14,21 +15,42 @@ const RelatorioVendas = () => {
     produto: '',
   });
 
+  // Fetch initial vendas data on mount
   useEffect(() => {
     fetchVendas();
-  }, [filters]);
+  }, []);
+
+  // Apply filters whenever vendas or filters change
+  useEffect(() => {
+    applyFilters();
+  }, [vendas, filters]);
 
   const fetchVendas = async () => {
     try {
       const queryParams = new URLSearchParams(filters);
       const response = await fetch(`http://localhost:3001/api/vendas?${queryParams}`);
       const data = await response.json();
-      
-      console.log('Dados recebidos:', data);  // Verifique a estrutura dos dados recebidos
-      
+      console.log('Dados recebidos:', data); // Verifique a estrutura dos dados
       setVendas(data);
     } catch (error) {
       console.error('Erro ao buscar vendas', error);
+    }
+  };
+
+  const applyFilters = () => {
+    try {
+      const filtered = vendas.filter((venda) => {
+        if (!venda) return false; // Verifica se a venda é válida
+        const matchesDataInicio = filters.dataInicio ? new Date(venda.data) >= new Date(filters.dataInicio) : true;
+        const matchesDataFim = filters.dataFim ? new Date(venda.data) <= new Date(filters.dataFim) : true;
+        const matchesPessoa = venda.nome_pessoa && venda.nome_pessoa.toLowerCase().includes(filters.pessoa.toLowerCase());
+        const matchesProduto = venda.produto && venda.produto.toLowerCase().includes(filters.produto.toLowerCase());
+
+        return matchesDataInicio && matchesDataFim && matchesPessoa && matchesProduto;
+      });
+      setFilteredVendas(filtered);
+    } catch (error) {
+      console.error('Erro ao aplicar filtros', error);
     }
   };
 
@@ -39,7 +61,7 @@ const RelatorioVendas = () => {
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    fetchVendas();
+    applyFilters(); // Aplicar os filtros manualmente ao submeter o formulário
   };
 
   return (
@@ -96,7 +118,7 @@ const RelatorioVendas = () => {
         <Button type="submit" label="Filtrar" className="p-button p-component" />
       </form>
 
-      <DataTable value={vendas} className="mt-4">
+      <DataTable value={filteredVendas} className="mt-4">
         <Column field="id" header="Código" />
         <Column field="nome_pessoa" header="Nome da Pessoa" />
         <Column field="total_venda" header="Total Venda" />
