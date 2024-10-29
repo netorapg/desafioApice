@@ -79,14 +79,6 @@ const RelatorioVendas = () => {
     }));
   };
 
-  const clearFilters = () => {
-    setFilters({
-      dataInicio: null,
-      dataFim: null,
-      pessoa: '',
-      produto: '',
-    });
-  };
 
   return (
     <div className="p-m-4">
@@ -142,7 +134,6 @@ const RelatorioVendas = () => {
               />
             </div>
           </div>
-          <Button label="Limpar Filtros" icon="pi pi-refresh" onClick={clearFilters} className="p-mt-2" />
         </Panel>
 
         <DataTable value={filteredVendas.length > 0 ? filteredVendas : vendas} className="mt-4">
