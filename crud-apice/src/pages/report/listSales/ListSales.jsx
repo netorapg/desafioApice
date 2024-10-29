@@ -11,6 +11,8 @@ const RelatorioVendas = () => {
   const [vendas, setVendas] = useState([]);
   const [filteredVendas, setFilteredVendas] = useState([]);
   const [pessoasMap, setPessoasMap] = useState({});
+  const [produtosMap, setProdutosMap] = useState({});
+  const [itensVenda, setItensVenda] = useState([]);
   const [filters, setFilters] = useState({
     data: null,
     pessoa: '',
@@ -20,11 +22,13 @@ const RelatorioVendas = () => {
   useEffect(() => {
     fetchPessoas();
     fetchVendas();
+    fetchItensVenda();
+    fetchProdutos(); // Adicione esta chamada para buscar produtos
   }, []);
 
   useEffect(() => {
     applyFilters(filters);
-  }, [vendas, filters]);
+  }, [vendas, itensVenda, filters]);
 
   const fetchPessoas = async () => {
     try {
@@ -48,14 +52,38 @@ const RelatorioVendas = () => {
     }
   };
 
+  const fetchItensVenda = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/venda_itens`); // Corrigido o endpoint
+      const data = await response.json();
+      setItensVenda(data);
+    } catch (error) {
+      console.error('Erro ao buscar itens de venda', error);
+    }
+  };
+
+  const fetchProdutos = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/produtos`); // Endpoint para buscar produtos
+      const data = await response.json();
+      const map = Object.fromEntries(data.map(produto => [produto.id, produto.nome]));
+      setProdutosMap(map);
+    } catch (error) {
+      console.error('Erro ao buscar produtos', error);
+    }
+  };
+
   const applyFilters = (filters) => {
     const filtered = vendas.filter((venda) => {
       const dtVenda = new Date(venda.dt_venda);
+      const produtosFiltrados = itensVenda
+        .filter(item => item.venda_id === venda.id)
+        .map(item => produtosMap[item.produto_id]); // Mapeia para o nome do produto
 
       return (
         (!filters.data || dtVenda.toDateString() === new Date(filters.data).toDateString()) &&
         (!filters.pessoa || pessoasMap[venda.pessoa_id]?.toLowerCase().includes(filters.pessoa.toLowerCase())) &&
-        (!filters.produto || (venda.produto && venda.produto.toLowerCase().includes(filters.produto.toLowerCase())))
+        (!filters.produto || produtosFiltrados.some(produto => produto?.toLowerCase().includes(filters.produto.toLowerCase())))
       );
     });
 
