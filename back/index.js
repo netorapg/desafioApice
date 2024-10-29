@@ -409,6 +409,83 @@ app.put('/api/vendas/:id', (req, res) => {
     });
 });
 
+// Rota para listar itens de venda
+app.get('/api/venda_itens', (req, res) => {
+    db.query('SELECT * FROM venda_itens', (err, results) => {
+        if (err) {
+            console.error('Erro ao listar itens de venda:', err);
+            return res.status(500).send(err);
+        }
+        res.json(results);
+    });
+});
+
+// Rota para adicionar item de venda
+app.post('/api/venda_itens', (req, res) => {
+    const { venda_id, produto_id, qtde, vr_venda } = req.body;
+    console.log('Dados recebidos para inserção de item de venda:', { venda_id, produto_id, qtde, vr_venda });
+
+    if (!venda_id || !produto_id || !qtde || !vr_venda) {
+        console.log('Erro: Dados insuficientes para inserção');
+        return res.status(400).send('Dados insuficientes para inserção');
+    }
+
+    const sql = 'INSERT INTO venda_itens (venda_id, produto_id, qtde, vr_venda) VALUES (?, ?, ?, ?)';
+    db.query(sql, [venda_id, produto_id, qtde, vr_venda], (err, results) => {
+        if (err) {
+            console.error('Erro ao adicionar item de venda:', err);
+            return res.status(500).send(`Erro ao adicionar item de venda: ${err.message}`);
+        }
+        res.json({ venda_id, produto_id, qtde, vr_venda, id: results.insertId });  // Retorna o ID gerado automaticamente
+    });
+});
+
+
+// Rota para deletar item de venda
+app.delete('/api/venda_itens/:id', (req, res) => {
+    const { id } = req.params;
+
+    const sql = 'DELETE FROM venda_itens WHERE id = ?';
+    db.query(sql, [id], (err, results) => {
+        if (err) {
+            console.error('Erro ao deletar item de venda:', err);
+            return res.status(500).send(`Erro ao deletar item de venda: ${err.message}`);
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).send('Item de venda não encontrado');
+        }
+
+        res.status(200).send('Item de venda deletado com sucesso');
+    });
+});
+
+// Rota para atualizar item de venda
+app.put('/api/venda_itens/:id', (req, res) => {
+    const { id } = req.params;
+    const { venda_id, produto_id, qtde, vr_venda } = req.body;
+
+    if (!venda_id || !produto_id || !qtde || !vr_venda) {
+        return res.status(400).send('Dados insuficientes para atualização');
+    }
+
+    const sql = 'UPDATE venda_itens SET venda_id = ?, produto_id = ?, qtde = ?, vr_venda = ? WHERE id = ?';
+    db.query(sql, [venda_id, produto_id, qtde, vr_venda, id], (err, results) => {
+        if (err) {
+            console.error('Erro ao atualizar item de venda:', err);
+            return res.status(500).send(`Erro ao atualizar item de venda: ${err.message}`);
+        }
+
+        if (results.affectedRows === 0) {
+            return res.status(404).send('Item de venda não encontrado');
+        }
+
+        res.status(200).send('Item de venda atualizado com sucesso');
+    });
+});
+
+
+
 
 const PORT = process.env.PORT || 3000;
 

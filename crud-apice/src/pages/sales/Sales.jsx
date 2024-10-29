@@ -149,7 +149,7 @@ export default function Sales() {
     // Submit the form
     const handleSubmit = async (e) => {
         e.preventDefault();
-    
+        
         if (items.length === 0) {
             alert('Por favor, adicione pelo menos um item à venda.');
             return;
@@ -164,6 +164,7 @@ export default function Sales() {
         const totalVenda = items.reduce((total, item) => total + item.valorItem, 0).toFixed(2);
     
         try {
+            // Salvar a venda e obter o ID
             const response = await fetch(url, {
                 method,
                 headers: {
@@ -173,16 +174,16 @@ export default function Sales() {
                     id: formData.codigo,
                     dt_venda: formattedDate,
                     pessoa_id: selectedPerson ? selectedPerson.id : null,
-                    total_venda: totalVenda, // Inclui o total da venda
+                    total_venda: totalVenda,
                 }),
             });
-    
+            
             if (response.ok) {
                 const venda = await response.json();
                 const vendaId = venda.id;
-    
-                // Salvar itens da venda
-                const itemResponses = await Promise.all(items.map(item => {
+            
+                // Salvar itens da venda com venda_id atribuído corretamente
+                const itemResponses = await Promise.all(items.map(async (item, index) => {
                     return fetch('http://localhost:3001/api/venda_itens', {
                         method: 'POST',
                         headers: {
@@ -196,7 +197,7 @@ export default function Sales() {
                         }),
                     });
                 }));
-    
+                
                 const allItemsSaved = itemResponses.every(res => res.ok);
     
                 if (allItemsSaved) {
@@ -208,6 +209,7 @@ export default function Sales() {
                         itens: [],
                     });
                     setDate(null);
+                    setItems([]); // Limpar itens após salvar
                     setEditingID(null);
                     fetchSales();
                 } else {
@@ -220,6 +222,7 @@ export default function Sales() {
             console.error('Erro ao salvar venda:', error);
         }
     };
+    
 
     // Cancel operation and navigate
     const handleCancel = () => {
